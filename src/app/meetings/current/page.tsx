@@ -1,8 +1,11 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { formatMeetingDate, getUpcomingSundayDate } from "../../../lib/helpers";
 import { getMeetingByDate } from "../../../lib/meetings-db";
+
+
 
 export default function CurrentMeetingPage() {
     return (

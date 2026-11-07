@@ -1,4 +1,15 @@
 import MeetingList from "../../components/meetings/MeetingsList";
+import type { Metadata } from "next";
+
+
+
+export const metadata: Metadata = {
+    title: "Meetings",
+    description:
+        "Sacrament meeting agendas and ward announcements.",
+};
+
+
 
 export default function MeetingsPage() {
     return (

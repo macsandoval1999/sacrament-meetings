@@ -6,12 +6,61 @@ import Footer from "../components/layout/Footer";
 import ScrollToTop from "../components/behaviors/ScrollToTop";
 import "./globals.css";
 
+
+
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const siteTitle = "Sacrament Meetings";
+const siteDescription =
+    "Sacrament meeting agendas and ward announcements. View your ward's schedule and updates. Built with Next.js, TypeScript, and Tailwind CSS.";
+
+
+
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
+
 
 export const metadata: Metadata = {
-    title: "Sacrament Meetings",
-    description: "Sacrament meeting agendas and ward announcements.",
+    metadataBase: new URL(siteUrl),
+    title: {
+        default: siteTitle,
+        template: "%s | Sacrament Meetings",
+    },
+    description: siteDescription,
+    icons: {
+        icon: [
+            { url: "/favicon.ico", type: "image/x-icon" },
+            { url: "/images/ward-logo.svg", type: "image/svg+xml" },
+        ],
+    },
+    openGraph: {
+        type: "website",
+        locale: "en_US",
+        url: "/",
+        siteName: siteTitle,
+        title: siteTitle,
+        description: siteDescription,
+        images: [
+            {
+                url: "/images/social-preview.png",
+                width: 1200,
+                height: 630,
+                alt: "Adobe Villa Ward sacrament meetings, with an open hymnbook logo",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: siteTitle,
+        description: siteDescription,
+        images: ["/images/social-preview.png"],
+    },
 };
+
+
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
     return (

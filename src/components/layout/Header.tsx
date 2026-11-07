@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import { wardName } from "../../lib/helpers";
 import NavLinks from "./NavLinks";
@@ -60,9 +61,16 @@ export default function Header() {
                 <div>
                     <Link
                         href="/"
-                        className="block text-lg font-bold tracking-tight text-foreground"
+                        className="flex items-center gap-3 text-lg font-bold tracking-tight text-foreground"
                     >
-                        {wardName}
+                        <Image
+                            src="/images/ward-logo.svg"
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="shrink-0"
+                        />
+                        <span>{wardName}</span>
                     </Link>
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                         Sacrament meetings
