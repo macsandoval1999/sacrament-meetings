@@ -1,0 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --background: #012280;
+  --surface: #066094;
+  --surface-raised: #6eaecc;
+  --foreground: #e2e7f5;
+  --muted: #a8b3c4;
+  --accent: #00b7ff;
+  --accent-bright: #689dff;
+  --border: #000264;
+  --font-body: "sans-serif", Georgia, serif;
+  --font-code: "Redaction 35", monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
+  --color-border: var(--border);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-code);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgb(228 72 86 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(228 72 86 / 3%) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  line-height: 1.65;
+  -webkit-tap-highlight-color: transparent;
+}
