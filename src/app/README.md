@@ -17,4 +17,4 @@ Next.js what to render.
   See [api/README.md](./api/README.md) for details.
 
 Pages and layouts can use reusable components from `src/components` and data
-functions from `src/lib`.
+functions from `src/lib`..
