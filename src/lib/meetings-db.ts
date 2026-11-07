@@ -1,10 +1,10 @@
 // First we import the SacramentMeeting type to ensure our meetings array adheres to the correct structure.
-import type { SacramentMeeting } from "../types/meeting-types";
+import type { SacramentMeeting } from "../types/meetings-types";
 
 const meetings: SacramentMeeting[] = [
     {
         id: 1,
-        date: "2026-05-03",
+        date: "2026-11-01",
         meetingType: "regular",
         presiding: "Bishop Smith",
         conducting: "Brother Jones",
@@ -30,13 +30,15 @@ const meetings: SacramentMeeting[] = [
     },
     {
         id: 2,
-        date: "2026-05-10",
+        date: "2026-11-08",
         meetingType: "regular",
         presiding: "Bishop Smith",
         conducting: "Brother Johnson",
         openingHymn: { number: 3, title: "Now Let Us Rejoice" },
         openingPrayer: "Brother Thompson",
-        wardBusiness: [{ description: "Discussion on upcoming ward activities" }],
+        wardBusiness: [
+            { description: "Discussion on upcoming ward activities" },
+        ],
         stakeBusiness: false,
         sacramentHymn: {
             number: 170,
@@ -56,11 +58,14 @@ const meetings: SacramentMeeting[] = [
     },
     {
         id: 3,
-        date: "2026-05-17",
+        date: "2026-11-15",
         meetingType: "regular",
         presiding: "Bishop Smith",
         conducting: "Brother Williams",
-        openingHymn: { number: 4, title: "Come, Let Us Sing of a Wonderful Love" },
+        openingHymn: {
+            number: 4,
+            title: "Come, Let Us Sing of a Wonderful Love",
+        },
         openingPrayer: "Brother Brown",
         wardBusiness: [{ description: "Planning for ward picnic" }],
         stakeBusiness: false,
@@ -82,7 +87,7 @@ const meetings: SacramentMeeting[] = [
     },
     {
         id: 4,
-        date: "2026-05-24",
+        date: "2026-11-22",
         meetingType: "regular",
         presiding: "Bishop Smith",
         conducting: "Brother Davis",
@@ -102,13 +107,16 @@ const meetings: SacramentMeeting[] = [
             },
             { name: "Ward Choir", topic: "", type: "musical-number" },
         ],
-        closingHymn: { number: 36, title: "God Be with You Till We Meet Again" },
+        closingHymn: {
+            number: 36,
+            title: "God Be with You Till We Meet Again",
+        },
         closingPrayer: "Brother Johnson",
-        announcements: ["Ward service project: May 25"],    
-    }, 
+        announcements: ["Ward service project: May 25"],
+    },
     {
         id: 5,
-        date: "2026-05-31",
+        date: "2026-11-29",
         meetingType: "regular",
         presiding: "Bishop Smith",
         conducting: "Brother Miller",
@@ -130,11 +138,12 @@ const meetings: SacramentMeeting[] = [
         ],
         closingHymn: { number: 37, title: "Now Let Us Rejoice" },
         closingPrayer: "Brother Davis",
-        announcements: ["Ward service project: May 30"],    
-    }
+        announcements: ["Ward service project: May 30"],
+    },
 ];
 
-// GET ALL: get all meetings, optionally filtered by date
+// GET ALL: get all meetings
+// GET ALL by date: get all meetings filtered by date if provided.
 export function getAllMeetings(date?: string | null): SacramentMeeting[] {
     if (date) return meetings.filter((meeting) => meeting.date === date);
     return meetings;
@@ -143,4 +152,9 @@ export function getAllMeetings(date?: string | null): SacramentMeeting[] {
 // GET by ID: get one meeting by its ID
 export function getMeetingById(id: number): SacramentMeeting | null {
     return meetings.find((meeting) => meeting.id === id) ?? null;
+}
+
+// GET by DATE: get one meeting by its date
+export function getMeetingByDate(date: string): SacramentMeeting | null {
+    return meetings.find((meeting) => meeting.date === date) ?? null;
 }

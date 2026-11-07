@@ -1,50 +1,65 @@
-@import url("https://fonts.googleapis.com/css2?family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap");
 @import "tailwindcss";
 
 :root {
   color-scheme: dark;
-  --background: #012280;
-  --surface: #066094;
-  --surface-raised: #6eaecc;
-  --foreground: #e2e7f5;
-  --muted: #a8b3c4;
-  --accent: #00b7ff;
-  --accent-bright: #689dff;
-  --border: #000264;
-  --font-body: "sans-serif", Georgia, serif;
-  --font-code: "Redaction 35", monospace;
+  --background: #052b50;
+  --foreground: #f1f6fa;
+  --surface: #123b5e;
+  --surface-conducted: #082845;
+  --border-conducted: #36546e;
+  --muted: #c1d2df;
+  --accent: #b6d8f3;
+  --accent-dark: #e2f1ff;
+  --action: #315d80;
+  --action-hover: #406e91;
+  --border: #52718b;
+  --font-body: var(--font-geist), Arial, Helvetica, sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
+  --color-surface-conducted: var(--surface-conducted);
+  --color-border-conducted: var(--border-conducted);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --color-accent-bright: var(--accent-bright);
+  --color-accent-dark: var(--accent-dark);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
   --color-border: var(--border);
   --font-sans: var(--font-body);
-  --font-mono: var(--font-code);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
+  isolation: isolate; /* Ensure that the body's stacking context is isolated for pseudo-elements. This prevents them from overlapping other content unexpectedly. */
   min-height: 100vh;
   margin: 0;
-  background-color: var(--background);
-  background-image:
-    linear-gradient(rgb(228 72 86 / 3%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(228 72 86 / 3%) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
-  line-height: 1.65;
-  -webkit-tap-highlight-color: transparent;
+}
+
+/* Top background layers for visual effect 
+    In coding terms, a pseudo-element is an element that is not actually present in the DOM but can be styled using CSS. body::before translates into a pseudo-element that appears before the content of the body, and body::after appears after the content of the body.
+    The reason why these dont interfere with the main content is because they are positioned with a negative z-index and have pointer-events set to none, making them purely decorative.
+*/
+body::before,
+body::after {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(16rem, 42vh, 24rem);
+  pointer-events: none;
+  content: "";
+}
+body::before {
+  background: rgb(114 151 180 / 18%);
+  clip-path: polygon(0 0, 85% 0, 0 100%);
+}
+body::after {
+  background: rgb(139 171 195 / 14%);
+  clip-path: polygon(0 0, 100% 0, 100% 32%);
 }
