@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { getTodayDate } from "../../lib/helpers";
+import type { ApiErrorResponse } from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingCard from "./MeetingCard";
 import MeetingsListSkeleton from "./MeetingsListSkeleton";
 
 export default function MeetingsList() {
     const [meetings, setMeetings] = useState<SacramentMeeting[] | null>(null);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState("");
     const [today, setToday] = useState<string | null>(null);
 
     useEffect(() => {
@@ -36,13 +37,18 @@ export default function MeetingsList() {
         async function loadMeetings() {
             try {
                 const response = await fetch("/api/meetings");
-                if (!response.ok) throw new Error(`Meeting request failed: ${response.status}`);
+                if (!response.ok) {
+                    const apiError: ApiErrorResponse = await response.json();
+                    if (active) setError(apiError.message);
+                    return;
+                }
+
                 const data: SacramentMeeting[] = await response.json();
                 if (active) setMeetings(data);
             } catch (error) {
                 if (active) {
                     console.error("Could not load meetings:", error);
-                    setError(true);
+                    setError("Something went wrong. Please try again later.");
                 }
             }
         }
@@ -53,7 +59,7 @@ export default function MeetingsList() {
         };
     }, []);
 
-    if (error) return <p role="alert" className="mt-8 text-foreground">Unable to load meetings. Please try again later.</p>;
+    if (error) return <p role="alert" className="mt-8 text-foreground">{error}</p>;
     if (!meetings) return <MeetingsListSkeleton />;
     if (meetings.length === 0) return <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">No meetings are currently available.</p>;
 

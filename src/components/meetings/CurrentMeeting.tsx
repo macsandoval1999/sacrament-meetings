@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatMeetingDate, getUpcomingSundayDate } from "../../lib/helpers";
 import MeetingDetails from "./MeetingDetails";
+import type { ApiErrorResponse } from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingSkeleton from "./MeetingSkeleton";
 
@@ -18,13 +19,11 @@ export default function CurrentMeeting() {
             const meetingDate = getUpcomingSundayDate();
 
             try {
-                const response = await fetch(
-                    `/api/meetings?date=${encodeURIComponent(meetingDate)}`
-                );
+                const response = await fetch(`/api/meetings?date=${encodeURIComponent(meetingDate)}`);
                 if (!response.ok) {
-                    throw new Error(
-                        `Meeting request failed: ${response.status}`
-                    );
+                    const apiError: ApiErrorResponse = await response.json();
+                    if (active) setError(apiError.message);
+                    return;
                 }
 
                 const meetings: SacramentMeeting[] = await response.json();
@@ -36,7 +35,7 @@ export default function CurrentMeeting() {
                 if (active) {
                     console.error("Could not load this Sunday's meeting:", error);
                     setError(
-                        "Unable to load this Sunday's meeting. Please try again later."
+                        "Something went wrong. Please try again later."
                     );
                 }
             }
