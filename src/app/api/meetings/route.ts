@@ -1,4 +1,8 @@
-import { getMeetingByDate, getPaginatedMeetings } from "../../../lib/meetings-db";
+import {
+    getMeetingByDate,
+    getMeetingsTotalPages,
+    getPaginatedMeetings,
+} from "../../../lib/meetings-db";
 import { isValidISODate } from "../../../lib/helpers";
 
 // Get paginated meetings or a meeting by date
@@ -41,8 +45,11 @@ export async function GET(request: Request) {
         }
 
         const query = searchParams.get("query") ?? "";
-        const meetings = await getPaginatedMeetings(query, page);
-        return Response.json(meetings);
+        const [meetings, totalPages] = await Promise.all([
+            getPaginatedMeetings(query, page),
+            getMeetingsTotalPages(query),
+        ]);
+        return Response.json({ meetings, totalPages });
     } catch (error) {
         console.error("Failed to retrieve meetings:", error);
         return Response.json(

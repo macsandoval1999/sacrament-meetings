@@ -35,7 +35,7 @@ export function MeetingSearch() {
             <input
                 id="meeting-search"
                 type="search"
-                placeholder="Search by date, leader, speaker, hymn, or announcement"
+                placeholder="Search by month, date, leader, speaker, hymn, or announcement"
                 defaultValue={searchParams.get("query") ?? ""}
                 onChange={(event) => handleSearch(event.target.value)}
                 className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"

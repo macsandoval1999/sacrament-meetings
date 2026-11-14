@@ -1,22 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getTodayDate } from "../../lib/helpers";
-import type { ApiErrorResponse } from "../../types/api-types";
+import type {
+    ApiErrorResponse,
+    PaginatedMeetingsResponse,
+} from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingCard from "./MeetingCard";
+import { MeetingPagination } from "./MeetingPagination";
 import MeetingsListSkeleton from "./MeetingsListSkeleton";
 
 export default function MeetingsList() {
     const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
     const query = searchParams.get("query")?.trim() ?? "";
+    const pageParam = searchParams.get("page");
+    const requestedPage = Number(pageParam);
+    const page =
+        pageParam !== null &&
+        /^\d+$/.test(pageParam) &&
+        Number.isSafeInteger(requestedPage) &&
+        requestedPage > 0
+            ? requestedPage
+            : 1;
     const [result, setResult] = useState<{
         query: string;
+        page: number;
         meetings: SacramentMeeting[];
+        totalPages: number;
     } | null>(null);
     const [error, setError] = useState<{
         query: string;
+        page: number;
         message: string;
     } | null>(null);
     const [today, setToday] = useState<string | null>(null);
@@ -45,21 +63,28 @@ export default function MeetingsList() {
 
         async function loadMeetings() {
             try {
-                const search = query
-                    ? `?query=${encodeURIComponent(query)}`
-                    : "";
-                const response = await fetch(`/api/meetings${search}`);
+                const params = new URLSearchParams({ page: String(page) });
+                if (query) params.set("query", query);
+
+                const response = await fetch(`/api/meetings?${params}`);
                 if (!response.ok) {
                     const apiError: ApiErrorResponse = await response.json();
                     if (active) {
-                        setError({ query, message: apiError.message });
+                        setError({ query, page, message: apiError.message });
                     }
                     return;
                 }
 
-                const data: SacramentMeeting[] = await response.json();
+                const data: PaginatedMeetingsResponse = await response.json();
                 if (active) {
-                    setResult({ query, meetings: data });
+                    if (page > Math.max(data.totalPages, 1)) {
+                        const params = new URLSearchParams(window.location.search);
+                        params.set("page", String(Math.max(data.totalPages, 1)));
+                        router.replace(`${pathname}?${params.toString()}`);
+                        return;
+                    }
+
+                    setResult({ query, page, ...data });
                     setError(null);
                 }
             } catch (error) {
@@ -67,6 +92,7 @@ export default function MeetingsList() {
                     console.error("Could not load meetings:", error);
                     setError({
                         query,
+                        page,
                         message: "Something went wrong. Please try again later.",
                     });
                 }
@@ -77,9 +103,9 @@ export default function MeetingsList() {
         return () => {
             active = false;
         };
-    }, [query]);
+    }, [page, pathname, query, router]);
 
-    if (error?.query === query) {
+    if (error?.query === query && error.page === page) {
         return (
             <p role="alert" className="mt-8 text-foreground">
                 {error.message}
@@ -87,7 +113,9 @@ export default function MeetingsList() {
         );
     }
 
-    if (!result || result.query !== query) return <MeetingsListSkeleton />;
+    if (!result || result.query !== query || result.page !== page) {
+        return <MeetingsListSkeleton />;
+    }
     if (result.meetings.length === 0) {
         return (
             <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">
@@ -99,10 +127,22 @@ export default function MeetingsList() {
     }
 
     return (
-        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {[...result.meetings].sort((a, b) => b.date.localeCompare(a.date)).map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} conducted={today !== null && meeting.date < today} />
-            ))}
+        <div className="mt-8">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {[...result.meetings]
+                    .sort((a, b) => b.date.localeCompare(a.date))
+                    .map((meeting) => (
+                        <MeetingCard
+                            key={meeting.id}
+                            meeting={meeting}
+                            conducted={today !== null && meeting.date < today}
+                        />
+                    ))}
+            </div>
+            <MeetingPagination
+                currentPage={page}
+                totalPages={result.totalPages}
+            />
         </div>
     );
 }

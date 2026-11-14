@@ -36,6 +36,7 @@ export async function getPaginatedMeetings(query: string = '', currentPage: numb
         FROM sacrament_meetings
         WHERE
             COALESCE(date::text, '') ILIKE ${searchTerm}
+            OR COALESCE(to_char(date, 'FMMonth YYYY'), '') ILIKE ${searchTerm}
             OR COALESCE(meeting_type::text, '') ILIKE ${searchTerm}
             OR COALESCE(presiding, '') ILIKE ${searchTerm}
             OR COALESCE(conducting, '') ILIKE ${searchTerm}
@@ -63,6 +64,7 @@ export async function getMeetingsTotalPages(query: string = ''): Promise<number>
         FROM sacrament_meetings
         WHERE
             COALESCE(date::text, '') ILIKE ${searchTerm}
+            OR COALESCE(to_char(date, 'FMMonth YYYY'), '') ILIKE ${searchTerm}
             OR COALESCE(meeting_type::text, '') ILIKE ${searchTerm}
             OR COALESCE(presiding, '') ILIKE ${searchTerm}
             OR COALESCE(conducting, '') ILIKE ${searchTerm}
