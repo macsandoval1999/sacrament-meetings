@@ -1,4 +1,4 @@
-import MeetingsListSkeleton from "../../components/meetings/MeetingsListSkeleton";
+import MeetingsListSkeleton from "@/components/meetings/MeetingsListSkeleton";
 
 export default function Loading() {
     return (

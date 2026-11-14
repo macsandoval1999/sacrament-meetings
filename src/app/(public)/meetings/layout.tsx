@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import SubNavLinks from "../../components/layout/SubNavLinks";
+import SubNavLinks from "@/components/layout/SubNavLinks";
 
 const meetingSubNavLinks = [
     { href: "/meetings/current", label: "This Sunday" },

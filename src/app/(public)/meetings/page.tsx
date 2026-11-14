@@ -1,4 +1,4 @@
-import MeetingList from "../../components/meetings/MeetingsList";
+import MeetingList from "@/components/meetings/MeetingsList";
 import type { Metadata } from "next";
 
 

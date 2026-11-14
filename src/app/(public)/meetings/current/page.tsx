@@ -1,4 +1,4 @@
-import CurrentMeeting from "../../../components/meetings/CurrentMeeting";
+import CurrentMeeting from "@/components/meetings/CurrentMeeting";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

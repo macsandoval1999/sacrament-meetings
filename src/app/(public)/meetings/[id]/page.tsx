@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
-import MeetingById from "../../../components/meetings/MeetingById";
-import MeetingSkeleton from "../../../components/meetings/MeetingSkeleton";
+import MeetingById from "@/components/meetings/MeetingById";
+import MeetingSkeleton from "@/components/meetings/MeetingSkeleton";
 import type { Metadata } from "next";
 
 
