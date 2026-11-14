@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingDetail from "./MeetingDetails";
+import MeetingSkeleton from "./MeetingSkeleton";
 
 
 
@@ -46,7 +47,12 @@ function MeetingResult({ id }: { id: string }) {
             <Link href="/meetings" className="mb-8 inline-block text-sm font-semibold text-accent hover:text-accent-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
                 &larr; All meetings
             </Link>
-            {error ? <p role="alert">{error}</p> : meeting ? <MeetingDetail meeting={meeting} /> : <p role="status" className="text-muted">Loading meeting...</p>}
+            {/* Check if there's an error ? and return a paragraph with the error message if it does,
+                : otherwise check if the meeting exists ? and return the meeting details component if it does,
+                : otherwise return the skeleton component */}
+            {error ? (<p role="alert">{error}</p>)
+                : meeting ? (<MeetingDetail meeting={meeting} />)
+                : ( <MeetingSkeleton /> )}
         </div>
     );
 }

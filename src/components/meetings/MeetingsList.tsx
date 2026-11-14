@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getTodayDate } from "../../lib/helpers";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingCard from "./MeetingCard";
+import MeetingsListSkeleton from "./MeetingsListSkeleton";
 
 export default function MeetingsList() {
     const [meetings, setMeetings] = useState<SacramentMeeting[] | null>(null);
@@ -53,7 +54,7 @@ export default function MeetingsList() {
     }, []);
 
     if (error) return <p role="alert" className="mt-8 text-foreground">Unable to load meetings. Please try again later.</p>;
-    if (!meetings) return <p role="status" className="mt-8 text-muted">Loading meetings...</p>;
+    if (!meetings) return <MeetingsListSkeleton />;
     if (meetings.length === 0) return <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">No meetings are currently available.</p>;
 
     return (

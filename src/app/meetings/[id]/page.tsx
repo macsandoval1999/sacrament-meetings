@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import MeetingById from "../../../components/meetings/MeetingById";
+import MeetingSkeleton from "../../../components/meetings/MeetingSkeleton";
 import type { Metadata } from "next";
 
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function MeetingPage() {
     return (
-        <Suspense fallback={<p className="text-muted">Loading meeting...</p>}>
+        <Suspense fallback={<MeetingSkeleton />}>
             <MeetingById />
         </Suspense>
     );
