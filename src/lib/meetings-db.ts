@@ -82,7 +82,7 @@ export async function getMeetingsTotalPages(query: string = ''): Promise<number>
 }
 
 // GET BY ID: get one meeting by its ID
-export async function getMeetingById(id: number, date?: string): Promise<SacramentMeeting | null> {
+export async function getMeetingById(id: number): Promise<SacramentMeeting | null> {
     const meeting = await sql`
         SELECT
             id,
@@ -99,7 +99,6 @@ export async function getMeetingById(id: number, date?: string): Promise<Sacrame
             speakers
         FROM sacrament_meetings
         WHERE id = ${id}
-        OR date = ${date}
     `;
 
     if (!meeting[0])
