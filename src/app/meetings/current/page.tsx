@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { connection } from "next/server";
 import { formatMeetingDate, getUpcomingSundayDate } from "../../../lib/helpers";
 import { getMeetingByDate } from "../../../lib/meetings-db";
 
@@ -21,9 +20,8 @@ export default function CurrentMeetingPage() {
 }
 
 async function CurrentMeeting() {
-    await connection();
     const date = getUpcomingSundayDate();
-    const meeting = getMeetingByDate(date);
+    const meeting = await getMeetingByDate(date);
 
     if (meeting) redirect(`/meetings/${meeting.id}?from=current`);
 
