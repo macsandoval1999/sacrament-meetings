@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getTodayDate } from "../../lib/helpers";
 import type {
-    ApiErrorResponse
+    ApiErrorResponse,
+    PaginatedMeetingsResponse,
 } from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingCard from "./MeetingCard";
