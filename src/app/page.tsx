@@ -51,6 +51,7 @@ export default function Home() {
                 alt="An open hymnbook with musical notes"
                 width={720}
                 height={320}
+                loading="eager"
                 className="mt-10 h-auto w-full rounded-xl border border-border"
             />
         </div>

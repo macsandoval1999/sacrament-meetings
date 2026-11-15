@@ -15,6 +15,11 @@ If there is no meeting for that date, the page displays a message instead.
 
 Run `npm run lint` and `npm run build` to check the application.
 
+Interactive API documentation is available at `/api-docs`. Run `npm run swagdoc`
+after updating the OpenAPI comments in the API route handlers or the schemas in
+`swagger.js`. This regenerates `public/swagger.json`; the same generation also
+runs automatically before `npm run dev` and `npm run build`.
+
 The header logo is in `public/images/ward-logo.svg`. The Open Graph preview
 uses the static `public/images/social-preview.png` referenced in the root
 layout's metadata. A generated `opengraph-image.tsx` is not needed because the

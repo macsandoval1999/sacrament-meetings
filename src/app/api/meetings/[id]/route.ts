@@ -1,5 +1,30 @@
-import { getMeetingById } from "../../../../lib/meetings-db";
+import { getMeetingById } from "@/lib/meetings-db";
 
+/**
+ * @openapi
+ * /api/meetings/{id}:
+ *   get:
+ *     tags:
+ *       - Meetings
+ *     summary: Get a meeting by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Meeting ID as a whole number.
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *     responses:
+ *       '200':
+ *         description: The requested meeting.
+ *       '400':
+ *         description: Invalid meeting ID.
+ *       '404':
+ *         description: No meeting exists for the requested ID.
+ *       '500':
+ *         description: The meeting data could not be retrieved.
+ */
 // Get one meeting by ID.
 export async function GET( _request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;

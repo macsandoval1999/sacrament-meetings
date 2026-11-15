@@ -8,16 +8,16 @@ import { neon } from "@neondatabase/serverless";
 // Initialize the SQL client using the Neon database URL from environment variables. This client will be used to execute queries against the database.
 const sql = neon(process.env.DATABASE_URL!);
 // Define the number of items to display per page for pagination purposes. This constant will be used when querying the database to limit the number of results returned per page.
-const ITEMS_PER_PAGE = 6;
+export const ITEMS_PER_PAGE = 6;
 
 
 
 // GET ALL PAGINATED: get meetings with pagination and optional search query.
 // Takes an optional search query and the current page number,
 // and returns a paginated list of meetings matching the search criteria.
-export async function getPaginatedMeetings(query: string = '', currentPage: number = 1): Promise<SacramentMeeting[]> {
+export async function getPaginatedMeetings(query: string = '', currentPage: number = 1, limit: number = ITEMS_PER_PAGE): Promise<SacramentMeeting[]> {
     const searchTerm = `%${query}%`;
-    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+    const offset = (currentPage - 1) * limit;
 
     const meetings = await sql`
         SELECT
@@ -50,14 +50,14 @@ export async function getPaginatedMeetings(query: string = '', currentPage: numb
             OR COALESCE(stake_business::text, '') ILIKE ${searchTerm}
             OR COALESCE(speakers::text, '') ILIKE ${searchTerm}
         ORDER BY date DESC
-        LIMIT ${ITEMS_PER_PAGE}
+        LIMIT ${limit}
         OFFSET ${offset}
     `;
     return meetings as unknown as SacramentMeeting[];
 }
 
-// GET TOTAL PAGES: get the total number of pages for paginated meetings based on the search query.
-export async function getMeetingsTotalPages(query: string = ''): Promise<number> {
+// GET TOTAL COUNT: count meetings matching the search query.
+export async function getMeetingsCount(query: string = ''): Promise<number> {
     const searchTerm = `%${query}%`;
     const meetings = await sql`
         SELECT COUNT(*)
@@ -79,8 +79,7 @@ export async function getMeetingsTotalPages(query: string = ''): Promise<number>
             OR COALESCE(speakers::text, '') ILIKE ${searchTerm}
     `;
 
-    const totalMeetingsPages = Math.ceil(Number(meetings[0]?.count ?? 0) / ITEMS_PER_PAGE);
-    return totalMeetingsPages;
+    return Number(meetings[0].count);
 }
 
 // GET BY ID: get one meeting by its ID

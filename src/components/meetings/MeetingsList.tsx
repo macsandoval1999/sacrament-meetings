@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getTodayDate } from "../../lib/helpers";
 import type {
-    ApiErrorResponse,
-    PaginatedMeetingsResponse,
+    ApiErrorResponse
 } from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingCard from "./MeetingCard";
@@ -30,7 +29,7 @@ export default function MeetingsList() {
         query: string;
         page: number;
         meetings: SacramentMeeting[];
-        totalPages: number;
+        pagination: PaginatedMeetingsResponse["pagination"];
     } | null>(null);
     const [error, setError] = useState<{
         query: string;
@@ -77,14 +76,19 @@ export default function MeetingsList() {
 
                 const data: PaginatedMeetingsResponse = await response.json();
                 if (active) {
-                    if (page > Math.max(data.totalPages, 1)) {
+                    if (page > Math.max(data.pagination.totalPages, 1)) {
                         const params = new URLSearchParams(window.location.search);
-                        params.set("page", String(Math.max(data.totalPages, 1)));
+                        params.set("page", String(Math.max(data.pagination.totalPages, 1)));
                         router.replace(`${pathname}?${params.toString()}`);
                         return;
                     }
 
-                    setResult({ query, page, ...data });
+                    setResult({
+                        query,
+                        page,
+                        meetings: data.meetings,
+                        pagination: data.pagination,
+                    });
                     setError(null);
                 }
             } catch (error) {
@@ -116,33 +120,41 @@ export default function MeetingsList() {
     if (!result || result.query !== query || result.page !== page) {
         return <MeetingsListSkeleton />;
     }
-    if (result.meetings.length === 0) {
-        return (
-            <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">
-                {query
-                    ? "No meetings match your search."
-                    : "No meetings are currently available."}
-            </p>
-        );
-    }
-
     return (
         <div className="mt-8">
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {[...result.meetings]
-                    .sort((a, b) => b.date.localeCompare(a.date))
-                    .map((meeting) => (
-                        <MeetingCard
-                            key={meeting.id}
-                            meeting={meeting}
-                            conducted={today !== null && meeting.date < today}
-                        />
-                    ))}
-            </div>
-            <MeetingPagination
-                currentPage={page}
-                totalPages={result.totalPages}
-            />
+            <p className="mb-4 text-sm text-muted" role="status">
+                Showing{" "}
+                {result.pagination.startItem === 0
+                    ? "0"
+                    : <>{result.pagination.startItem}&ndash;{result.pagination.endItem}</>}{" "}
+                of {result.pagination.totalItems}{" "}
+                {result.pagination.totalItems === 1 ? "meeting" : "meetings"}
+            </p>
+            {result.meetings.length === 0 ? (
+                <p className="rounded-xl border border-border bg-surface p-6 text-muted">
+                    {query
+                        ? "No meetings match your search."
+                        : "No meetings are currently available."}
+                </p>
+            ) : (
+                <>
+                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        {[...result.meetings]
+                            .sort((a, b) => b.date.localeCompare(a.date))
+                            .map((meeting) => (
+                                <MeetingCard
+                                    key={meeting.id}
+                                    meeting={meeting}
+                                    conducted={today !== null && meeting.date < today}
+                                />
+                            ))}
+                    </div>
+                    <MeetingPagination
+                        currentPage={page}
+                        totalPages={result.pagination.totalPages}
+                    />
+                </>
+            )}
         </div>
     );
 }

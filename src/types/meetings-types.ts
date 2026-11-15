@@ -41,3 +41,4 @@ export interface SacramentMeeting {
     closing_hymn: Hymn;
     closing_prayer: string;
 }
+

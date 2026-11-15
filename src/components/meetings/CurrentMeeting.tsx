@@ -22,15 +22,20 @@ export default function CurrentMeeting() {
                 const response = await fetch(`/api/meetings?date=${encodeURIComponent(meetingDate)}`);
                 if (!response.ok) {
                     const apiError: ApiErrorResponse = await response.json();
-                    if (active) setError(apiError.message);
+                    if (active) {
+                        if (response.status === 404 && apiError.error === "NOT_FOUND") {
+                            setDate(meetingDate);
+                        } else {
+                            setError(apiError.message);
+                        }
+                    }
                     return;
                 }
 
-                const meetings: SacramentMeeting[] = await response.json();
+                const data: { meeting: SacramentMeeting } = await response.json();
                 if (!active) return;
 
-                setDate(meetingDate);
-                if (meetings.length > 0) setMeeting(meetings[0]);
+                setMeeting(data.meeting);
             } catch (error) {
                 if (active) {
                     console.error("Could not load this Sunday's meeting:", error);
