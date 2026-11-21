@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
-import { wardName } from "../../lib/helpers";
+import { wardName } from "@/lib/helpers";
 import NavLinks from "./NavLinks";
 import CurrentDate from "../behaviors/CurrentDate";
 

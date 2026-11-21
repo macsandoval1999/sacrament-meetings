@@ -13,7 +13,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
     return (
         <article>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-accent">
-                {meeting.meetingType} meeting
+                {meeting.meeting_type} meeting
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
                 <time dateTime={meeting.date}>
@@ -69,23 +69,23 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Opening hymn
                         </dt>
                         <dd className="mt-1">
-                            <HymnEntry hymn={meeting.openingHymn} />
+                            <HymnEntry hymn={meeting.opening_hymn} />
                         </dd>
                     </div>
                     <div className="py-4">
                         <dt className="text-sm font-semibold text-muted">
                             Opening prayer
                         </dt>
-                        <dd className="mt-1">{meeting.openingPrayer}</dd>
+                        <dd className="mt-1">{meeting.opening_prayer}</dd>
                     </div>
                     <div className="py-4">
                         <dt className="text-sm font-semibold text-muted">
                             Ward business
                         </dt>
                         <dd className="mt-1">
-                            {meeting.wardBusiness.length > 0 ? (
+                            {meeting.ward_business.length > 0 ? (
                                 <ul className="list-disc space-y-1 pl-5">
-                                    {meeting.wardBusiness.map((item, index) => (
+                                    {meeting.ward_business.map((item, index) => (
                                         <li key={index}>{item.description}</li>
                                     ))}
                                 </ul>
@@ -99,7 +99,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Stake business
                         </dt>
                         <dd className="mt-1">
-                            {meeting.stakeBusiness ? "Yes" : "None"}
+                            {meeting.stake_business ? "Yes" : "None"}
                         </dd>
                     </div>
                     <div className="py-4">
@@ -107,7 +107,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Sacrament hymn
                         </dt>
                         <dd className="mt-1">
-                            <HymnEntry hymn={meeting.sacramentHymn} />
+                            <HymnEntry hymn={meeting.sacrament_hymn} />
                         </dd>
                     </div>
                     <div className="py-4">
@@ -147,14 +147,14 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Closing hymn
                         </dt>
                         <dd className="mt-1">
-                            <HymnEntry hymn={meeting.closingHymn} />
+                            <HymnEntry hymn={meeting.closing_hymn} />
                         </dd>
                     </div>
                     <div className="pt-4">
                         <dt className="text-sm font-semibold text-muted">
                             Closing prayer
                         </dt>
-                        <dd className="mt-1">{meeting.closingPrayer}</dd>
+                        <dd className="mt-1">{meeting.closing_prayer}</dd>
                     </div>
                 </dl>
             </section>

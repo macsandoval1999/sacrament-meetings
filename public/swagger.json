@@ -1,0 +1,384 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Sacrament Meetings API",
+    "version": "1.0.0",
+    "description": "API for sacrament meeting agendas."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Hymn": {
+        "type": "object",
+        "required": [
+          "number",
+          "title"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "SpeakerItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "topic",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "speaker",
+              "musical-number"
+            ]
+          }
+        }
+      },
+      "WardBusinessItem": {
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "SacramentMeeting": {
+        "type": "object",
+        "required": [
+          "id",
+          "date",
+          "meeting_type",
+          "presiding",
+          "conducting",
+          "opening_hymn",
+          "opening_prayer",
+          "ward_business",
+          "stake_business",
+          "sacrament_hymn",
+          "speakers",
+          "closing_hymn",
+          "closing_prayer"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "meeting_type": {
+            "type": "string",
+            "enum": [
+              "testimony",
+              "regular",
+              "stake",
+              "general"
+            ]
+          },
+          "presiding": {
+            "type": "string"
+          },
+          "conducting": {
+            "type": "string"
+          },
+          "announcements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "opening_hymn": {
+            "$ref": "#/components/schemas/Hymn"
+          },
+          "opening_prayer": {
+            "type": "string"
+          },
+          "ward_business": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WardBusinessItem"
+            }
+          },
+          "stake_business": {
+            "type": "boolean"
+          },
+          "sacrament_hymn": {
+            "$ref": "#/components/schemas/Hymn"
+          },
+          "speakers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpeakerItem"
+            }
+          },
+          "closing_hymn": {
+            "$ref": "#/components/schemas/Hymn"
+          },
+          "closing_prayer": {
+            "type": "string"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedMeetings": {
+        "type": "object",
+        "required": [
+          "message",
+          "meetings",
+          "query",
+          "sort",
+          "pagination"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "meetings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SacramentMeeting"
+            }
+          },
+          "query": {
+            "type": "object",
+            "description": "Search filter applied to the meeting list, or an empty object when no search was provided.",
+            "properties": {
+              "query": {
+                "type": "string"
+              }
+            }
+          },
+          "sort": {
+            "type": "object",
+            "description": "Meetings are ordered by date, newest first.",
+            "required": [
+              "field",
+              "order"
+            ],
+            "properties": {
+              "field": {
+                "type": "string",
+                "enum": [
+                  "date"
+                ]
+              },
+              "order": {
+                "type": "string",
+                "enum": [
+                  "desc"
+                ]
+              }
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "required": [
+              "page",
+              "limit",
+              "totalItems",
+              "startItem",
+              "endItem",
+              "totalPages",
+              "hasNextPage",
+              "hasPreviousPage",
+              "totalMeetings"
+            ],
+            "properties": {
+              "page": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50
+              },
+              "totalItems": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of meetings matching the search."
+              },
+              "startItem": {
+                "type": "integer",
+                "minimum": 0,
+                "example": 1,
+                "description": "Position of the first meeting on this page, or 0 if the page is empty."
+              },
+              "endItem": {
+                "type": "integer",
+                "minimum": 0,
+                "example": 6,
+                "description": "Position of the last meeting on this page, or 0 if the page is empty."
+              },
+              "totalPages": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hasNextPage": {
+                "type": "boolean"
+              },
+              "hasPreviousPage": {
+                "type": "boolean"
+              },
+              "totalMeetings": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total number of meetings, before search filtering."
+              }
+            }
+          }
+        }
+      },
+      "MeetingByDate": {
+        "type": "object",
+        "required": [
+          "message",
+          "meeting"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/SacramentMeeting"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/meetings": {
+      "get": {
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Get paginated meetings or a meeting by date",
+        "description": "When date is provided, page, limit, and query are ignored. Otherwise, results are ordered by date descending.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Find the meeting for this calendar date in YYYY-MM-DD format.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "description": "Case-insensitive partial match across meeting details, including dates, month names, leaders, hymns, speakers, and announcements.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number for the filtered meeting list (default is 1).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of meetings per page (default is 6, maximum is 50).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated meeting list, or the meeting for the requested date."
+          },
+          "400": {
+            "description": "Invalid date, page, or limit."
+          },
+          "404": {
+            "description": "No meeting exists for the requested date."
+          },
+          "500": {
+            "description": "The meeting data could not be retrieved."
+          }
+        }
+      }
+    },
+    "/api/meetings/{id}": {
+      "get": {
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Get a meeting by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Meeting ID as a whole number.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested meeting."
+          },
+          "400": {
+            "description": "Invalid meeting ID."
+          },
+          "404": {
+            "description": "No meeting exists for the requested ID."
+          },
+          "500": {
+            "description": "The meeting data could not be retrieved."
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

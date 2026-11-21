@@ -9,9 +9,14 @@ function such as `GET` handles that HTTP request method.
 
 ## Meeting endpoints
 
-- `GET /api/meetings` returns all meetings. Add a date query parameter, such
-  as `/api/meetings?date=2026-11-08`, to return meetings for that date. A date
-  with no matches returns an empty array.
+- `GET /api/meetings` returns a paginated list, optionally filtered with
+  `query`, and accepts `page` and `limit` (default 6, maximum 50). Its
+  response includes the search, sort order, pagination totals, and the first
+  and last positions displayed (`startItem` and `endItem`, both 0 for an empty
+  page). Add a date
+  query parameter, such as
+  `/api/meetings?date=2026-11-08`, to return the meeting for that date.
+  A date with no matching meeting returns **404**.
 - `GET /api/meetings/1` returns the meeting with ID `1`. The `[id]` folder is
   a dynamic route segment, so the handler reads the ID from the URL.
 
@@ -22,3 +27,6 @@ Next.js, the handler awaits `params` before reading the ID.
 The handlers retrieve their data from
 [`src/lib/meetings-db.ts`](../../lib/meetings-db.ts). The
 meeting pages fetch these endpoints and pass the results to UI components.
+
+Visit `/api-docs` for interactive endpoint and response documentation. Run
+`npm run swagdoc` after changing the route OpenAPI comments or shared schemas.

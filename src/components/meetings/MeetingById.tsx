@@ -5,8 +5,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { ApiErrorResponse } from "../../types/api-types";
 import type { SacramentMeeting } from "../../types/meetings-types";
 import MeetingDetail from "./MeetingDetails";
+import MeetingSkeleton from "./MeetingSkeleton";
 
 
 
@@ -20,17 +22,18 @@ function MeetingResult({ id }: { id: string }) {
         async function loadMeeting() {
             try {
                 const response = await fetch(`/api/meetings/${encodeURIComponent(id)}`);
-                if (response.status === 400 || response.status === 404) {
-                    if (active) setError("Meeting not found.");
+                if (!response.ok) {
+                    const apiError: ApiErrorResponse = await response.json();
+                    if (active) setError(apiError.message);
                     return;
                 }
-                if (!response.ok) throw new Error(`Meeting request failed: ${response.status}`);
+
                 const data: SacramentMeeting = await response.json();
                 if (active) setMeeting(data);
             } catch (error) {
                 if (active) {
                     console.error("Could not load meeting:", error);
-                    setError("Unable to load the meeting. Please try again later.");
+                    setError("Something went wrong. Please try again later.");
                 }
             }
         }
@@ -46,7 +49,12 @@ function MeetingResult({ id }: { id: string }) {
             <Link href="/meetings" className="mb-8 inline-block text-sm font-semibold text-accent hover:text-accent-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
                 &larr; All meetings
             </Link>
-            {error ? <p role="alert">{error}</p> : meeting ? <MeetingDetail meeting={meeting} /> : <p role="status" className="text-muted">Loading meeting...</p>}
+            {/* Check if there's an error ? and return a paragraph with the error message if it does,
+                : otherwise check if the meeting exists ? and return the meeting details component if it does,
+                : otherwise return the skeleton component */}
+            {error ? (<p role="alert">{error}</p>)
+                : meeting ? (<MeetingDetail meeting={meeting} />)
+                : ( <MeetingSkeleton /> )}
         </div>
     );
 }

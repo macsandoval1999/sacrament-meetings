@@ -10,7 +10,7 @@ export default function MeetingCard({ meeting, conducted = false }: { meeting: S
             ${conducted ? "border-border-conducted bg-surface-conducted": "border-border bg-surface"}`}>
             
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
-                {meeting.meetingType} meeting
+                {meeting.meeting_type} meeting
             </p>
             {conducted && (
                 <p className="mt-3 w-fit rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">

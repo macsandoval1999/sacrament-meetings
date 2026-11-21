@@ -1,7 +1,3 @@
-"use client";
-
-
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import MobileMenu from "./MobileMenu";
@@ -11,6 +7,7 @@ import MobileMenu from "./MobileMenu";
 const links = [
     { href: "/", label: "Home" },
     { href: "/meetings", label: "Meetings" },
+    { href: "/api-docs", label: "API Docs" }
 ];
 
 

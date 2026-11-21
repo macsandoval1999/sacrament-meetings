@@ -28,16 +28,17 @@ export interface WardBusinessItem {
 export interface SacramentMeeting {
     id: number;
     date: string; // ISO date string: 'YYYY-MM-DD'
-    meetingType: MeetingType;
+    meeting_type: MeetingType;
     presiding: string;
     conducting: string;
     announcements?: string[];
-    openingHymn: Hymn;
-    openingPrayer: string;
-    wardBusiness: WardBusinessItem[];
-    stakeBusiness: boolean;
-    sacramentHymn: Hymn;
+    opening_hymn: Hymn;
+    opening_prayer: string;
+    ward_business: WardBusinessItem[];
+    stake_business: boolean;
+    sacrament_hymn: Hymn;
     speakers: SpeakerItem[];
-    closingHymn: Hymn;
-    closingPrayer: string;
+    closing_hymn: Hymn;
+    closing_prayer: string;
 }
+

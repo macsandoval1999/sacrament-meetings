@@ -1,4 +1,4 @@
-import { wardName } from "../../lib/helpers";
+import { wardName } from "@/lib/helpers";
 
 export default function Footer() {
     return (

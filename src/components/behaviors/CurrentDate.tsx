@@ -1,8 +1,3 @@
-// Marks this as a Client Component. It needs browser features like window.setInterval and React’s state and effect hooks.
-"use client";
-
-
-
 // useState is a React hook that allows you to add state to a functional component. a state is a value that React keeps track of and updates when it changes.
 // useEffect runs code after the component appears and handles cleanup. This means it can be used to perform side effects like fetching data, setting up subscriptions, or updating the DOM after render. This makes it essential for update a component like CurrentDate that needs to refresh periodically.
 import { useEffect, useState } from "react";
