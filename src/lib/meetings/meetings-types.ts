@@ -42,3 +42,27 @@ export interface SacramentMeeting {
     closing_prayer: string;
 }
 
+export interface MeetingFormInput {
+    date: string;
+    meeting_type: string;
+    presiding: string;
+    conducting: string;
+    announcements: string;
+    opening_hymn_number: string;
+    opening_hymn_title: string;
+    opening_prayer: string;
+    ward_business: string;
+    stake_business: boolean;
+    sacrament_hymn_number: string;
+    sacrament_hymn_title: string;
+    speakers: string;
+    closing_hymn_number: string;
+    closing_hymn_title: string;
+    closing_prayer: string;
+}
+
+export interface MeetingFormState {
+    message: string;
+    errors: Partial<Record<keyof MeetingFormInput, string[]>>;
+}
+

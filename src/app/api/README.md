@@ -1,32 +1,58 @@
-# The api folder
+# Meeting API
 
-The `api` folder contains Next.js Route Handlers: server-side endpoints that
-respond to HTTP requests. Unlike a page, an API endpoint generally returns
-data, such as JSON, rather than a user interface.
+The API is implemented with Next.js Route Handlers. Each request is validated
+by a controller, which calls the shared database models and returns JSON.
+Interactive OpenAPI documentation is available at `/api-docs`.
 
-Each `route.ts` file defines a route based on its folder path. An exported
-function such as `GET` handles that HTTP request method.
+## Response envelope
 
-## Meeting endpoints
+Every controller response uses the same JSON shape, regardless of its HTTP
+status:
 
-- `GET /api/meetings` returns a paginated list, optionally filtered with
-  `query`, and accepts `page` and `limit` (default 6, maximum 50). Its
-  response includes the search, sort order, pagination totals, and the first
-  and last positions displayed (`startItem` and `endItem`, both 0 for an empty
-  page). Add a date
-  query parameter, such as
-  `/api/meetings?date=2026-11-08`, to return the meeting for that date.
-  A date with no matching meeting returns **404**.
-- `GET /api/meetings/1` returns the meeting with ID `1`. The `[id]` folder is
-  a dynamic route segment, so the handler reads the ID from the URL.
+```json
+{
+  "statusCode": 200,
+  "message": "Meeting retrieved successfully.",
+  "data": {},
+  "errors": null
+}
+```
 
-The ID endpoint returns **200** when a meeting is found, **400** for an invalid
-ID, and **404** when a valid ID has no matching meeting. In this version of
-Next.js, the handler awaits `params` before reading the ID.
+`statusCode` matches the HTTP response status. Successful responses include
+the fetched or mutated data; error responses set `data` to `null` and include
+an `errors` array with an error code, message, and optional field errors.
+Delete returns **200** with the deleted meeting in `data` so its response body
+can include the same envelope.
 
-The handlers retrieve their data from
-[`src/lib/meetings-db.ts`](../../lib/meetings-db.ts). The
-meeting pages fetch these endpoints and pass the results to UI components.
+## Collection: `/api/meetings`
 
-Visit `/api-docs` for interactive endpoint and response documentation. Run
-`npm run swagdoc` after changing the route OpenAPI comments or shared schemas.
+- `GET /api/meetings` returns meetings ordered newest to oldest. Optional query
+  parameters are `query`, `page` (default `1`), and `limit` (default `6`,
+  maximum `50`). `data` contains the meetings, search/sort metadata, and
+  pagination totals and positions.
+- `GET /api/meetings?date=2026-11-08` returns the meeting for that date. An
+  invalid date returns **400**; a date with no meeting returns **404**. The
+  meeting is in `data`.
+- `POST /api/meetings` creates a meeting. Send an `application/json` body
+  matching the `MeetingInput` schema shown in Swagger. The response is **201**;
+  `data` contains the created meeting. Invalid JSON or meeting data returns
+  **400**, and an unsupported content type returns **415**.
+
+## Individual meeting: `/api/meetings/{id}`
+
+- `GET /api/meetings/1` returns the meeting with ID `1`.
+- `PUT /api/meetings/1` replaces the meeting with ID `1`. Send a full
+  `MeetingInput` JSON object; the updated meeting is in `data`.
+- `DELETE /api/meetings/1` deletes the meeting with ID `1` and returns the
+  deleted meeting in `data`.
+
+The item endpoints return **400** for an invalid ID and **404** when a valid ID
+does not exist. Update and delete return **500** if the database operation
+fails. The `[id]` route awaits Next.js `params` before validating the ID.
+
+## Meeting pages
+
+The user-facing routes are `/meetings`, `/meetings/new`,
+`/meetings/{id}`, and `/meetings/{id}/edit`. The create and edit forms and
+delete controls submit Server Actions; they use the same models as the HTTP
+API. Invalid IDs and missing meetings render the meeting not-found page.

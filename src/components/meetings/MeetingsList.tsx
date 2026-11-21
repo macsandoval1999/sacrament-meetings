@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getTodayDate } from "../../lib/helpers";
+import SectionLoading from "../behaviors/SectionLoading";
 import type {
     ApiErrorResponse,
+    PaginatedMeetingsData,
     PaginatedMeetingsResponse,
-} from "../../types/api-types";
-import type { SacramentMeeting } from "../../types/meetings-types";
+} from "../../lib/api/api-responses";
+import type { SacramentMeeting } from "../../lib/meetings/meetings-types";
 import MeetingCard from "./MeetingCard";
 import { MeetingPagination } from "./MeetingPagination";
-import MeetingsListSkeleton from "./MeetingsListSkeleton";
 
 export default function MeetingsList() {
     const searchParams = useSearchParams();
@@ -19,18 +20,20 @@ export default function MeetingsList() {
     const query = searchParams.get("query")?.trim() ?? "";
     const pageParam = searchParams.get("page");
     const requestedPage = Number(pageParam);
-    const page =
+    let page = 1;
+    if (
         pageParam !== null &&
         /^\d+$/.test(pageParam) &&
         Number.isSafeInteger(requestedPage) &&
         requestedPage > 0
-            ? requestedPage
-            : 1;
+    ) {
+        page = requestedPage;
+    }
     const [result, setResult] = useState<{
         query: string;
         page: number;
         meetings: SacramentMeeting[];
-        pagination: PaginatedMeetingsResponse["pagination"];
+        pagination: PaginatedMeetingsData["pagination"];
     } | null>(null);
     const [error, setError] = useState<{
         query: string;
@@ -47,7 +50,10 @@ export default function MeetingsList() {
             setToday(getTodayDate());
             const midnight = new Date();
             midnight.setHours(24, 0, 0, 0);
-            timer = window.setTimeout(updateToday, midnight.getTime() - Date.now());
+            timer = window.setTimeout(
+                updateToday,
+                midnight.getTime() - Date.now()
+            );
         }
 
         updateToday();
@@ -75,11 +81,23 @@ export default function MeetingsList() {
                     return;
                 }
 
-                const data: PaginatedMeetingsResponse = await response.json();
+                const apiResponse: PaginatedMeetingsResponse =
+                    await response.json();
+                if (!apiResponse.data) {
+                    throw new Error(
+                        "The meetings response did not include data."
+                    );
+                }
+                const data = apiResponse.data;
                 if (active) {
                     if (page > Math.max(data.pagination.totalPages, 1)) {
-                        const params = new URLSearchParams(window.location.search);
-                        params.set("page", String(Math.max(data.pagination.totalPages, 1)));
+                        const params = new URLSearchParams(
+                            window.location.search
+                        );
+                        params.set(
+                            "page",
+                            String(Math.max(data.pagination.totalPages, 1))
+                        );
                         router.replace(`${pathname}?${params.toString()}`);
                         return;
                     }
@@ -98,7 +116,8 @@ export default function MeetingsList() {
                     setError({
                         query,
                         page,
-                        message: "Something went wrong. Please try again later.",
+                        message:
+                            "Something went wrong. Please try again later.",
                     });
                 }
             }
@@ -119,43 +138,64 @@ export default function MeetingsList() {
     }
 
     if (!result || result.query !== query || result.page !== page) {
-        return <MeetingsListSkeleton />;
+        return (
+            <SectionLoading label="Loading meetings..." variant="meetings" />
+        );
     }
+
+    let startAndEndPosition = "0";
+    if (result.pagination.startItem !== 0) {
+        startAndEndPosition = `${result.pagination.startItem}–${result.pagination.endItem}`;
+    }
+
+    let meetingLabel = "meetings";
+    if (result.pagination.totalItems === 1) {
+        meetingLabel = "meeting";
+    }
+
+    let emptyMessage = "No meetings are currently available.";
+    if (query) {
+        emptyMessage = "No meetings match your search.";
+    }
+
+    let meetingsContent;
+    if (result.meetings.length === 0) {
+        meetingsContent = (
+            <p className="rounded-xl border border-border bg-surface p-6 text-muted">
+                {emptyMessage}
+            </p>
+        );
+    } else {
+        meetingsContent = (
+            <>
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {[...result.meetings]
+                        .sort((a, b) => b.date.localeCompare(a.date))
+                        .map((meeting) => (
+                            <MeetingCard
+                                key={meeting.id}
+                                meeting={meeting}
+                                conducted={
+                                    today !== null && meeting.date < today
+                                }
+                            />
+                        ))}
+                </div>
+                <MeetingPagination
+                    currentPage={page}
+                    totalPages={result.pagination.totalPages}
+                />
+            </>
+        );
+    }
+
     return (
         <div className="mt-8">
             <p className="mb-4 text-sm text-muted" role="status">
-                Showing{" "}
-                {result.pagination.startItem === 0
-                    ? "0"
-                    : <>{result.pagination.startItem}&ndash;{result.pagination.endItem}</>}{" "}
-                of {result.pagination.totalItems}{" "}
-                {result.pagination.totalItems === 1 ? "meeting" : "meetings"}
+                Showing {startAndEndPosition} of {result.pagination.totalItems}{" "}
+                {meetingLabel}
             </p>
-            {result.meetings.length === 0 ? (
-                <p className="rounded-xl border border-border bg-surface p-6 text-muted">
-                    {query
-                        ? "No meetings match your search."
-                        : "No meetings are currently available."}
-                </p>
-            ) : (
-                <>
-                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {[...result.meetings]
-                            .sort((a, b) => b.date.localeCompare(a.date))
-                            .map((meeting) => (
-                                <MeetingCard
-                                    key={meeting.id}
-                                    meeting={meeting}
-                                    conducted={today !== null && meeting.date < today}
-                                />
-                            ))}
-                    </div>
-                    <MeetingPagination
-                        currentPage={page}
-                        totalPages={result.pagination.totalPages}
-                    />
-                </>
-            )}
+            {meetingsContent}
         </div>
     );
 }

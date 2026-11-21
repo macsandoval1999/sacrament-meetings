@@ -21,7 +21,11 @@ export function MeetingSearch() {
         params.delete("page");
 
         const queryString = params.toString();
-        replace(queryString ? `${pathname}?${queryString}` : pathname);
+        let nextPath = pathname;
+        if (queryString) {
+            nextPath = `${pathname}?${queryString}`;
+        }
+        replace(nextPath);
     }, 300);
 
     return (

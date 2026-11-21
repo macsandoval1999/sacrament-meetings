@@ -1,4 +1,8 @@
-import { getMeetingById } from "@/lib/meetings-db";
+import {
+    deleteMeeting,
+    getMeeting,
+    updateMeeting,
+} from "@/lib/meetings/controllers/meetings-controllers";
 
 /**
  * @openapi
@@ -18,49 +22,113 @@ import { getMeetingById } from "@/lib/meetings-db";
  *     responses:
  *       '200':
  *         description: The requested meeting.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MeetingResponse'
  *       '400':
  *         description: Invalid meeting ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '404':
  *         description: No meeting exists for the requested ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '500':
  *         description: The meeting data could not be retrieved.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *   put:
+ *     tags:
+ *       - Meetings
+ *     summary: Replace a meeting by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/MeetingInput'
+ *     responses:
+ *       '200':
+ *         description: Meeting updated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MeetingResponse'
+ *       '400':
+ *         description: Invalid meeting ID, JSON, or meeting data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '404':
+ *         description: No meeting exists for the requested ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '415':
+ *         description: The request must use application/json.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '500':
+ *         description: The meeting could not be updated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *   delete:
+ *     tags:
+ *       - Meetings
+ *     summary: Delete a meeting by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *     responses:
+ *       '200':
+ *         description: Meeting deleted; the response data contains the deleted meeting.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MeetingResponse'
+ *       '400':
+ *         description: Invalid meeting ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '404':
+ *         description: No meeting exists for the requested ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '500':
+ *         description: The meeting could not be deleted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
  */
-// Get one meeting by ID.
-export async function GET( _request: Request, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-
-    if (!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id))) {
-        return Response.json(
-            {
-                error: "INVALID_MEETING_ID",
-                message: "The meeting ID is invalid.",
-            },
-            { status: 400 }
-        );
-    }
-
-    try {
-        const meeting = await getMeetingById(Number(id));
-
-        if (!meeting) {
-            return Response.json(
-                {
-                    error: "MEETING_NOT_FOUND",
-                    message: "No meeting was found with that ID.",
-                },
-                { status: 404 }
-            );
-        }
-
-        return Response.json(meeting);
-    } catch (error) {
-        console.error("Failed to retrieve meeting:", error);
-        return Response.json(
-            {
-                error: "INTERNAL_SERVER_ERROR",
-                message: "Something went wrong. Please try again later.",
-            },
-            { status: 500 }
-        );
-    }
-}
+export const GET = getMeeting;
+export const PUT = updateMeeting;
+export const DELETE = deleteMeeting;

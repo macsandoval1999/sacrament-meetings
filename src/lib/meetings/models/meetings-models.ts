@@ -1,21 +1,21 @@
 // First we import the SacramentMeeting type to ensure our meetings array adheres to the correct structure.
-import type { SacramentMeeting } from "../types/meetings-types";
+import type { SacramentMeeting } from "../meetings-types";
 // We also import the neon database client for serverless database interactions. This allows us to interact with the database in a serverless environment. The way it works is by providing a lightweight client that can be used in serverless functions to query the database efficiently.
 import { neon } from "@neondatabase/serverless";
-
-
 
 // Initialize the SQL client using the Neon database URL from environment variables. This client will be used to execute queries against the database.
 const sql = neon(process.env.DATABASE_URL!);
 // Define the number of items to display per page for pagination purposes. This constant will be used when querying the database to limit the number of results returned per page.
 export const ITEMS_PER_PAGE = 6;
 
-
-
 // GET ALL PAGINATED: get meetings with pagination and optional search query.
 // Takes an optional search query and the current page number,
 // and returns a paginated list of meetings matching the search criteria.
-export async function getPaginatedMeetings(query: string = '', currentPage: number = 1, limit: number = ITEMS_PER_PAGE): Promise<SacramentMeeting[]> {
+export async function getPaginatedMeetings(
+    query: string = "",
+    currentPage: number = 1,
+    limit: number = ITEMS_PER_PAGE
+): Promise<SacramentMeeting[]> {
     const searchTerm = `%${query}%`;
     const offset = (currentPage - 1) * limit;
 
@@ -57,7 +57,7 @@ export async function getPaginatedMeetings(query: string = '', currentPage: numb
 }
 
 // GET TOTAL COUNT: count meetings matching the search query.
-export async function getMeetingsCount(query: string = ''): Promise<number> {
+export async function getMeetingsCount(query: string = ""): Promise<number> {
     const searchTerm = `%${query}%`;
     const meetings = await sql`
         SELECT COUNT(*)
@@ -83,7 +83,9 @@ export async function getMeetingsCount(query: string = ''): Promise<number> {
 }
 
 // GET BY ID: get one meeting by its ID
-export async function getMeetingById(id: number): Promise<SacramentMeeting | null> {
+export async function getMeetingById(
+    id: number
+): Promise<SacramentMeeting | null> {
     const meeting = await sql`
         SELECT
             id,
@@ -102,14 +104,15 @@ export async function getMeetingById(id: number): Promise<SacramentMeeting | nul
         WHERE id = ${id}
     `;
 
-    if (!meeting[0])
-        return null;
+    if (!meeting[0]) return null;
 
     return meeting[0] as unknown as SacramentMeeting;
 }
 
 // GET by DATE: get one meeting by its date
-export async function getMeetingByDate(date: string): Promise<SacramentMeeting | null> {
+export async function getMeetingByDate(
+    date: string
+): Promise<SacramentMeeting | null> {
     const meeting = await sql`
         SELECT
             id,
@@ -128,25 +131,117 @@ export async function getMeetingByDate(date: string): Promise<SacramentMeeting |
         WHERE date = ${date}
     `;
 
-    if (!meeting[0])
-        return null;
+    if (!meeting[0]) return null;
 
     return meeting[0] as unknown as SacramentMeeting;
 }
 
-// export async function addMeeting(
-//   data: Omit<SacramentMeeting, 'id'>
-// ): Promise<SacramentMeeting> {
-//   throw new Error('addMeeting: database implementation coming in Week 04');
-// }
+export async function createMeeting(
+    meeting: Omit<SacramentMeeting, "id">
+): Promise<SacramentMeeting> {
+    const created = await sql`
+        INSERT INTO sacrament_meetings (
+            date, meeting_type, presiding, conducting, announcements,
+            opening_hymn, opening_prayer, ward_business, stake_business,
+            sacrament_hymn, speakers, closing_hymn, closing_prayer
+        )
+        VALUES (
+            ${meeting.date}::date,
+            ${meeting.meeting_type},
+            ${meeting.presiding},
+            ${meeting.conducting},
+            ${JSON.stringify(meeting.announcements ?? [])}::jsonb,
+            ${JSON.stringify(meeting.opening_hymn)}::jsonb,
+            ${meeting.opening_prayer},
+            ${JSON.stringify(meeting.ward_business)}::jsonb,
+            ${meeting.stake_business},
+            ${JSON.stringify(meeting.sacrament_hymn)}::jsonb,
+            ${JSON.stringify(meeting.speakers)}::jsonb,
+            ${JSON.stringify(meeting.closing_hymn)}::jsonb,
+            ${meeting.closing_prayer}
+        )
+        RETURNING
+            id,
+            to_char(date, 'YYYY-MM-DD') AS "date",
+            meeting_type,
+            presiding, conducting, announcements,
+            opening_hymn,
+            sacrament_hymn,
+            closing_hymn,
+            opening_prayer,
+            closing_prayer,
+            ward_business,
+            stake_business,
+            speakers
+    `;
+    if (!created[0]) {
+        throw new Error("The created meeting was not returned by the database.");
+    }
 
-// export async function updateMeeting(
-//   id: number,
-//   updates: Partial<SacramentMeeting>
-// ): Promise<SacramentMeeting | null> {
-//   throw new Error('updateMeeting: database implementation coming in Week 04');
-// }
+    return created[0] as unknown as SacramentMeeting;
+}
 
-// export async function deleteMeeting(id: number): Promise<boolean> {
-//   throw new Error('deleteMeeting: database implementation coming in Week 04');
-// }
+export async function updateMeeting(
+    id: number,
+    meeting: Omit<SacramentMeeting, "id">
+): Promise<SacramentMeeting | null> {
+    const updated = await sql`
+        UPDATE sacrament_meetings
+        SET
+            date = ${meeting.date}::date,
+            meeting_type = ${meeting.meeting_type},
+            presiding = ${meeting.presiding},
+            conducting = ${meeting.conducting},
+            announcements = ${JSON.stringify(meeting.announcements ?? [])}::jsonb,
+            opening_hymn = ${JSON.stringify(meeting.opening_hymn)}::jsonb,
+            opening_prayer = ${meeting.opening_prayer},
+            ward_business = ${JSON.stringify(meeting.ward_business)}::jsonb,
+            stake_business = ${meeting.stake_business},
+            sacrament_hymn = ${JSON.stringify(meeting.sacrament_hymn)}::jsonb,
+            speakers = ${JSON.stringify(meeting.speakers)}::jsonb,
+            closing_hymn = ${JSON.stringify(meeting.closing_hymn)}::jsonb,
+            closing_prayer = ${meeting.closing_prayer}
+        WHERE id = ${id}
+        RETURNING
+            id,
+            to_char(date, 'YYYY-MM-DD') AS "date",
+            meeting_type,
+            presiding, conducting, announcements,
+            opening_hymn,
+            sacrament_hymn,
+            closing_hymn,
+            opening_prayer,
+            closing_prayer,
+            ward_business,
+            stake_business,
+            speakers
+    `;
+    if (!updated[0]) return null;
+
+    return updated[0] as unknown as SacramentMeeting;
+}
+
+export async function deleteMeeting(
+    id: number
+): Promise<SacramentMeeting | null> {
+    const deleted = await sql`
+        DELETE FROM sacrament_meetings
+        WHERE id = ${id}
+        RETURNING
+            id,
+            to_char(date, 'YYYY-MM-DD') AS "date",
+            meeting_type,
+            presiding, conducting, announcements,
+            opening_hymn,
+            sacrament_hymn,
+            closing_hymn,
+            opening_prayer,
+            closing_prayer,
+            ward_business,
+            stake_business,
+            speakers
+    `;
+    if (!deleted[0]) return null;
+
+    return deleted[0] as unknown as SacramentMeeting;
+}

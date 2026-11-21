@@ -1,5 +1,6 @@
 import { formatMeetingDate } from "../../lib/helpers";
-import type { Hymn, SacramentMeeting } from "../../types/meetings-types";
+import type { ReactNode } from "react";
+import type { Hymn, SacramentMeeting } from "../../lib/meetings/meetings-types";
 
 function HymnEntry({ hymn }: { hymn: Hymn }) {
     return (
@@ -9,7 +10,69 @@ function HymnEntry({ hymn }: { hymn: Hymn }) {
     );
 }
 
-export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting }) {
+export default function MeetingDetails({
+    meeting,
+}: {
+    meeting: SacramentMeeting;
+}) {
+    let announcementsContent = (
+        <p className="mt-4 text-sm text-muted">No announcements.</p>
+    );
+    if (meeting.announcements && meeting.announcements.length > 0) {
+        announcementsContent = (
+            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6">
+                {meeting.announcements.map((announcement, index) => (
+                    <li key={index}>{announcement}</li>
+                ))}
+            </ul>
+        );
+    }
+
+    let wardBusinessContent: ReactNode = "None";
+    if (meeting.ward_business.length > 0) {
+        wardBusinessContent = (
+            <ul className="list-disc space-y-1 pl-5">
+                {meeting.ward_business.map((item, index) => (
+                    <li key={index}>{item.description}</li>
+                ))}
+            </ul>
+        );
+    }
+
+    let stakeBusinessLabel = "None";
+    if (meeting.stake_business) {
+        stakeBusinessLabel = "Yes";
+    }
+
+    let speakersContent: ReactNode = "None";
+    if (meeting.speakers.length > 0) {
+        speakersContent = (
+            <ul className="space-y-3">
+                {meeting.speakers.map((item, index) => {
+                    let itemTypeLabel = "Speaker";
+                    if (item.type === "musical-number") {
+                        itemTypeLabel = "Musical number";
+                    }
+
+                    return (
+                        <li key={index}>
+                            <span className="font-medium">{item.name}</span>
+                            <span className="text-muted">
+                                {" "}
+                                &middot; {itemTypeLabel}
+                            </span>
+                            {item.topic && (
+                                <p className="text-sm text-muted">
+                                    {item.topic}
+                                </p>
+                            )}
+                        </li>
+                    );
+                })}
+            </ul>
+        );
+    }
+
     return (
         <article>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-accent">
@@ -44,20 +107,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                 </section>
                 <section className="rounded-xl border border-border bg-surface p-6 shadow-sm">
                     <h2 className="text-lg font-semibold">Announcements</h2>
-                    {meeting.announcements &&
-                    meeting.announcements.length > 0 ? (
-                        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6">
-                            {meeting.announcements.map(
-                                (announcement, index) => (
-                                    <li key={index}>{announcement}</li>
-                                )
-                            )}
-                        </ul>
-                    ) : (
-                        <p className="mt-4 text-sm text-muted">
-                            No announcements.
-                        </p>
-                    )}
+                    {announcementsContent}
                 </section>
             </div>
 
@@ -83,15 +133,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Ward business
                         </dt>
                         <dd className="mt-1">
-                            {meeting.ward_business.length > 0 ? (
-                                <ul className="list-disc space-y-1 pl-5">
-                                    {meeting.ward_business.map((item, index) => (
-                                        <li key={index}>{item.description}</li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                "None"
-                            )}
+                            {wardBusinessContent}
                         </dd>
                     </div>
                     <div className="py-4">
@@ -99,7 +141,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Stake business
                         </dt>
                         <dd className="mt-1">
-                            {meeting.stake_business ? "Yes" : "None"}
+                            {stakeBusinessLabel}
                         </dd>
                     </div>
                     <div className="py-4">
@@ -115,31 +157,7 @@ export default function MeetingDetails({ meeting }: { meeting: SacramentMeeting 
                             Speakers and musical numbers
                         </dt>
                         <dd className="mt-1">
-                            {meeting.speakers.length > 0 ? (
-                                <ul className="space-y-3">
-                                    {meeting.speakers.map((item, index) => (
-                                        <li key={index}>
-                                            <span className="font-medium">
-                                                {item.name}
-                                            </span>
-                                            <span className="text-muted">
-                                                {" "}
-                                                &middot;{" "}
-                                                {item.type === "musical-number"
-                                                    ? "Musical number"
-                                                    : "Speaker"}
-                                            </span>
-                                            {item.topic && (
-                                                <p className="text-sm text-muted">
-                                                    {item.topic}
-                                                </p>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                "None"
-                            )}
+                            {speakersContent}
                         </dd>
                     </div>
                     <div className="py-4">
