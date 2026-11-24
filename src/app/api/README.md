@@ -53,6 +53,10 @@ fails. The `[id]` route awaits Next.js `params` before validating the ID.
 ## Hymns
 
 - `GET /api/hymns` lists hymns. Use `id`, `title`, or `query` to search.
+- `GET /api/hymns/paginated` searches hymn IDs and titles with `query` and
+  returns hymns ordered by ID along with search, sort, and pagination metadata.
+  `page` defaults to `1`; `limit` defaults to `50` and may be from `1` to `50`.
+  Invalid page or limit values return **400**.
 - `GET /api/hymns/1` retrieves hymn `1`.
 - `POST /api/hymns` creates a hymn with `{ "id": 1, "title": "..." }`.
 - `PUT /api/hymns/1` updates its title; the body ID must match the URL.

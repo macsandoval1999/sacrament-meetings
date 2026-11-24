@@ -5,7 +5,10 @@ import {
     deleteHymnById as removeHymnById,
     getHymnByTitle as findHymnByTitle,
     getAllHymns as findAllHymns,
+    getAllPaginatedHymns as findAllPaginatedHymns,
     getHymnById as findHymnById,
+    getHymnsCount,
+    ITEMS_PER_PAGE,
     updateHymnById as editHymnById,
 } from "../models/hymns-models";
 import { HymnSchema } from "../hymns-schemas";
@@ -56,6 +59,88 @@ export async function getAllHymns(request: Request) {
             "The hymns could not be retrieved.",
             500
         );
+    }
+}
+
+export async function getAllPaginatedHymns(request: Request) {
+    const { searchParams } = new URL(request.url);
+    try {
+        const pageParam = searchParams.get("page");
+        let page = 1;
+        if (pageParam !== null) {
+            page = Number(pageParam);
+        }
+        if (
+            pageParam !== null &&
+            (!/^\d+$/.test(pageParam) || !Number.isSafeInteger(page) || page < 1)
+        ) {
+            return getErrorResponse("INVALID_PAGE", "Page must be a positive whole number.", 400);
+        }
+
+        const limitParam = searchParams.get("limit");
+        let limit = ITEMS_PER_PAGE;
+        if (limitParam !== null) {
+            limit = Number(limitParam);
+        }
+        if (
+            limitParam !== null &&
+            (!/^\d+$/.test(limitParam) || !Number.isSafeInteger(limit) || limit < 1 || limit > 50)
+        ) {
+            return getErrorResponse("INVALID_LIMIT", "Limit must be a whole number between 1 and 50.", 400);
+        }
+        if (!Number.isSafeInteger((page - 1) * limit)) {
+            return getErrorResponse("INVALID_PAGE", "Page number is too large for the requested limit.", 400);
+        }
+
+        const query = searchParams.get("query") ?? "";
+        let totalHymnsPromise: Promise<number | null> = Promise.resolve(null);
+        if (query) {
+            totalHymnsPromise = getHymnsCount();
+        }
+        const [hymns, totalItems, totalHymns] = await Promise.all([
+            findAllPaginatedHymns(query, page, limit),
+            getHymnsCount(query),
+            totalHymnsPromise,
+        ]);
+        const totalPages = Math.ceil(totalItems / limit);
+        let startItem = 0;
+        let endItem = 0;
+        if (hymns.length > 0) {
+            startItem = (page - 1) * limit + 1;
+            endItem = startItem + hymns.length - 1;
+        }
+        let message = "No hymns found for the requested page and search.";
+        if (hymns.length > 0) {
+            message = "Hymns retrieved successfully.";
+        }
+        let queryFilter: { query?: string } = {};
+        if (query) {
+            queryFilter = { query };
+        }
+        let totalHymnCount = totalItems;
+        if (totalHymns !== null) {
+            totalHymnCount = totalHymns;
+        }
+
+        return getApiResponse(200, message, {
+            hymns,
+            query: queryFilter,
+            sort: { field: "id", order: "asc" },
+            pagination: {
+                page,
+                limit,
+                totalItems,
+                startItem,
+                endItem,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1,
+                totalHymns: totalHymnCount,
+            },
+        });
+    } catch (error) {
+        console.error("Failed to retrieve paginated hymns:", error);
+        return getErrorResponse("INTERNAL_SERVER_ERROR", "The hymns could not be retrieved.", 500);
     }
 }
 

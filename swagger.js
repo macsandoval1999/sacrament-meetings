@@ -45,6 +45,50 @@ const options = {
                         errors: { type: "array", nullable: true, items: { $ref: "#/components/schemas/ApiResponseError" } },
                     },
                 },
+                PaginatedHymns: {
+                    type: "object",
+                    required: ["statusCode", "message", "data", "errors"],
+                    properties: {
+                        statusCode: { type: "integer" },
+                        message: { type: "string" },
+                        data: {
+                            type: "object",
+                            required: ["hymns", "query", "sort", "pagination"],
+                            properties: {
+                                hymns: { type: "array", items: { $ref: "#/components/schemas/Hymn" } },
+                                query: {
+                                    type: "object",
+                                    description: "Search filter applied, or an empty object when no search was provided.",
+                                    properties: { query: { type: "string" } },
+                                },
+                                sort: {
+                                    type: "object",
+                                    required: ["field", "order"],
+                                    properties: {
+                                        field: { type: "string", enum: ["id"] },
+                                        order: { type: "string", enum: ["asc"] },
+                                    },
+                                },
+                                pagination: {
+                                    type: "object",
+                                    required: ["page", "limit", "totalItems", "startItem", "endItem", "totalPages", "hasNextPage", "hasPreviousPage", "totalHymns"],
+                                    properties: {
+                                        page: { type: "integer", minimum: 1 },
+                                        limit: { type: "integer", minimum: 1, maximum: 50 },
+                                        totalItems: { type: "integer", minimum: 0, description: "Number of hymns matching the search." },
+                                        startItem: { type: "integer", minimum: 0, description: "Position of the first hymn, or 0 if the page is empty." },
+                                        endItem: { type: "integer", minimum: 0, description: "Position of the last hymn, or 0 if the page is empty." },
+                                        totalPages: { type: "integer", minimum: 0 },
+                                        hasNextPage: { type: "boolean" },
+                                        hasPreviousPage: { type: "boolean" },
+                                        totalHymns: { type: "integer", minimum: 0, description: "Total number of hymns before search filtering." },
+                                    },
+                                },
+                            },
+                        },
+                        errors: { type: "array", nullable: true, items: { $ref: "#/components/schemas/ApiResponseError" } },
+                    },
+                },
                 SpeakerItem: {
                     type: "object",
                     required: ["name", "topic"],

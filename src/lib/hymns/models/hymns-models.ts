@@ -3,6 +3,8 @@ import type { Hymn, HymnInput } from "../hymns-types";
 
 const sql = neon(process.env.DATABASE_URL!);
 
+export const ITEMS_PER_PAGE = 50;
+
 export async function getAllHymns(): Promise<Hymn[]> {
     const hymns = await sql`
         SELECT id, title
@@ -10,6 +12,34 @@ export async function getAllHymns(): Promise<Hymn[]> {
         ORDER BY id ASC
     `;
     return hymns as unknown as Hymn[];
+}
+
+export async function getAllPaginatedHymns(
+    query: string = "",
+    currentPage: number = 1,
+    limit: number = ITEMS_PER_PAGE
+): Promise<Hymn[]> {
+    const searchTerm = `%${query}%`;
+    const offset = (currentPage - 1) * limit;
+    const hymns = await sql`
+        SELECT id, title
+        FROM hymns
+        WHERE id::text ILIKE ${searchTerm} OR title ILIKE ${searchTerm}
+        ORDER BY id ASC
+        LIMIT ${limit}
+        OFFSET ${offset}
+    `;
+    return hymns as unknown as Hymn[];
+}
+
+export async function getHymnsCount(query: string = ""): Promise<number> {
+    const searchTerm = `%${query}%`;
+    const hymns = await sql`
+        SELECT COUNT(*)
+        FROM hymns
+        WHERE id::text ILIKE ${searchTerm} OR title ILIKE ${searchTerm}
+    `;
+    return Number(hymns[0].count);
 }
 
 export async function getHymnById(id: number): Promise<Hymn | null> {
