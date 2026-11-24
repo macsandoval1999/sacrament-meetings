@@ -41,30 +41,12 @@ import {
  *     responses:
  *       '200':
  *         description: A paginated meeting list, or the meeting for the requested date.
- *         content:
- *           application/json:
- *             schema:
- *               oneOf:
- *                 - $ref: '#/components/schemas/PaginatedMeetings'
- *                 - $ref: '#/components/schemas/MeetingByDate'
  *       '400':
  *         description: Invalid date, page, or limit.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '404':
  *         description: No meeting exists for the requested date.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '500':
  *         description: The meeting data could not be retrieved.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *   post:
  *     tags:
  *       - Meetings
@@ -78,28 +60,14 @@ import {
  *     responses:
  *       '201':
  *         description: Meeting created.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/MeetingResponse'
  *       '400':
  *         description: Invalid JSON or meeting data.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '415':
  *         description: The request must use application/json.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '409':
+ *         description: A meeting already exists for the requested date.
  *       '500':
  *         description: The meeting could not be created.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  */
 export const GET = getMeetings;
 export const POST = createMeeting;

@@ -9,23 +9,22 @@ import type {
 } from "./meetings-types";
 
 /***** Constants *****/
-const MEETING_TYPES = ["testimony", "regular", "stake", "general"] as const;
+const MEETING_TYPES = ["testimony", "regular", "stake", "general"] as const satisfies readonly SacramentMeeting["meeting_type"][];
 const MEETING_FORM_FIELDS = new Set<string>([
     "date",
     "meeting_type",
     "presiding",
     "conducting",
     "announcements",
-    "opening_hymn_number",
-    "opening_hymn_title",
+    "opening_hymn_id",
     "opening_prayer",
     "ward_business",
     "stake_business",
-    "sacrament_hymn_number",
-    "sacrament_hymn_title",
+    "sacrament_hymn_id",
+    "intermediate_hymn_id",
+    "musical_number_ids",
     "speakers",
-    "closing_hymn_number",
-    "closing_hymn_title",
+    "closing_hymn_id",
     "closing_prayer",
 ]);
 
@@ -41,26 +40,26 @@ function parseLines(value: string): string[] {
         .filter((line) => line.length > 0);
 }
 
-function parseSpeakers(value: string): SpeakerItem[] {
+function parseSpeakerItems(value: string): SpeakerItem[] {
     return parseLines(value).map((line) => {
-        const [name, topic, type] = line.split("|").map((part) => part.trim());
-        let speakerType: SpeakerItem["type"] = "speaker";
-        if (type === "musical-number") {
-            speakerType = "musical-number";
-        }
-        return { name, topic, type: speakerType };
+        const parts = line.split("|").map((part) => part.trim());
+        return {
+            name: parts[0] ?? "",
+            topic: parts[1] ?? "",
+        };
     });
 }
 
 /***** Schemas *****/
-const hymnNumberSchema = z
+const hymnIdSchema = z
     .string()
     .refine(
         (value) =>
             /^\d+$/.test(value) &&
             Number.isSafeInteger(Number(value)) &&
-            Number(value) > 0,
-        "Enter a positive whole hymn number.",
+            Number(value) > 0 &&
+            Number(value) <= 2147483647,
+        "Select a hymn.",
     )
     .transform(Number);
 
@@ -84,12 +83,7 @@ export const MeetingFormSchema = z
             .string()
             .max(4000, "Announcements must be 4,000 characters or fewer.")
             .transform(parseLines),
-        opening_hymn_number: hymnNumberSchema,
-        opening_hymn_title: z
-            .string()
-            .trim()
-            .min(1, "Enter the opening hymn title.")
-            .max(255),
+        opening_hymn_id: hymnIdSchema,
         opening_prayer: z
             .string()
             .trim()
@@ -103,12 +97,29 @@ export const MeetingFormSchema = z
                 items.map((description) => ({ description }))
             ),
         stake_business: z.boolean(),
-        sacrament_hymn_number: hymnNumberSchema,
-        sacrament_hymn_title: z
+        sacrament_hymn_id: hymnIdSchema,
+        intermediate_hymn_id: z.union([
+            z.literal("").transform(() => null),
+            hymnIdSchema,
+        ]),
+        musical_number_ids: z
             .string()
-            .trim()
-            .min(1, "Enter the sacrament hymn title.")
-            .max(255),
+            .max(4000, "Musical hymn entries must be 4,000 characters or fewer.")
+            .superRefine((value, context) => {
+                const lines = parseLines(value);
+                if (lines.length > 30) {
+                    context.addIssue({ code: "custom", message: "Enter no more than 30 musical hymns." });
+                }
+                lines.forEach((line, index) => {
+                    if (!hymnIdSchema.safeParse(line).success) {
+                        context.addIssue({
+                            code: "custom",
+                            message: `Line ${index + 1}: enter a valid hymn number.`,
+                        });
+                    }
+                });
+            })
+            .transform((value) => parseLines(value).map(Number)),
         speakers: z
             .string()
             .max(6000, "Speaker entries must be 6,000 characters or fewer.")
@@ -117,49 +128,36 @@ export const MeetingFormSchema = z
                 if (lines.length > 30) {
                     context.addIssue({
                         code: "custom",
-                        message:
-                            "Enter no more than 30 speakers or musical numbers.",
+                        message: "Enter no more than 30 items.",
                     });
                 }
                 lines.forEach((line, index) => {
                     const parts = line.split("|").map((part) => part.trim());
-                    if (parts.length !== 3) {
+                    if (parts.length > 2) {
                         context.addIssue({
                             code: "custom",
-                            message: `Line ${index + 1}: use Name | Topic | speaker or musical-number.`,
+                            message: `Line ${index + 1}: use Name or Name | Topic.`,
                         });
-                        return;
                     }
-                    if (parts[0].length === 0) {
+                    if (!parts[0]) {
                         context.addIssue({
                             code: "custom",
                             message: `Line ${index + 1}: enter a name.`,
                         });
                     }
                     if (
-                        parts[2] !== "speaker" &&
-                        parts[2] !== "musical-number"
+                        parts[0].length > 255 ||
+                        (parts[1]?.length ?? 0) > 1000
                     ) {
                         context.addIssue({
                             code: "custom",
-                            message: `Line ${index + 1}: type must be speaker or musical-number.`,
-                        });
-                    }
-                    if (parts[0].length > 255 || parts[1].length > 1000) {
-                        context.addIssue({
-                            code: "custom",
-                            message: `Line ${index + 1}: name or topic is too long.`,
+                            message: `Line ${index + 1}: name or topic/description is too long.`,
                         });
                     }
                 });
             })
-            .transform(parseSpeakers),
-        closing_hymn_number: hymnNumberSchema,
-        closing_hymn_title: z
-            .string()
-            .trim()
-            .min(1, "Enter the closing hymn title.")
-            .max(255),
+            .transform(parseSpeakerItems),
+        closing_hymn_id: hymnIdSchema,
         closing_prayer: z
             .string()
             .trim()
@@ -167,36 +165,24 @@ export const MeetingFormSchema = z
             .max(255),
     })
     .transform(
-        (fields): Omit<SacramentMeeting, "id"> => ({
+        (fields) => ({
             date: fields.date,
             meeting_type: fields.meeting_type,
             presiding: fields.presiding,
             conducting: fields.conducting,
             announcements: fields.announcements,
-            opening_hymn: {
-                number: fields.opening_hymn_number,
-                title: fields.opening_hymn_title,
-            },
+            opening_hymn_id: fields.opening_hymn_id,
             opening_prayer: fields.opening_prayer,
             ward_business: fields.ward_business,
             stake_business: fields.stake_business,
-            sacrament_hymn: {
-                number: fields.sacrament_hymn_number,
-                title: fields.sacrament_hymn_title,
-            },
+            sacrament_hymn_id: fields.sacrament_hymn_id,
+            intermediate_hymn_id: fields.intermediate_hymn_id,
+            musical_number_ids: fields.musical_number_ids,
             speakers: fields.speakers,
-            closing_hymn: {
-                number: fields.closing_hymn_number,
-                title: fields.closing_hymn_title,
-            },
+            closing_hymn_id: fields.closing_hymn_id,
             closing_prayer: fields.closing_prayer,
         })
     );
-
-const HymnSchema = z.object({
-    number: z.number().int().positive(),
-    title: z.string().trim().min(1).max(255),
-});
 
 export const MeetingPayloadSchema = z.object({
     date: z.string().refine(isValidISODate, "Enter a valid meeting date."),
@@ -204,23 +190,31 @@ export const MeetingPayloadSchema = z.object({
     presiding: z.string().trim().min(1).max(255),
     conducting: z.string().trim().min(1).max(255),
     announcements: z.array(z.string()).default([]),
-    opening_hymn: HymnSchema,
+    opening_hymn_id: z.number().int().positive().max(2147483647),
     opening_prayer: z.string().trim().min(1).max(255),
     ward_business: z.array(
         z.object({ description: z.string().trim().min(1).max(1000) })
     ),
     stake_business: z.boolean(),
-    sacrament_hymn: HymnSchema,
+    sacrament_hymn_id: z.number().int().positive().max(2147483647),
+    intermediate_hymn_id: z
+        .number()
+        .int()
+        .positive()
+        .max(2147483647)
+        .nullable()
+        .optional()
+        .transform((value) => value ?? null),
+    musical_number_ids: z.array(z.number().int().positive().max(2147483647)).max(30).default([]),
     speakers: z.array(
         z.object({
             name: z.string().trim().min(1).max(255),
             topic: z.string().max(1000),
-            type: z.enum(["speaker", "musical-number"]),
         })
     ),
-    closing_hymn: HymnSchema,
+    closing_hymn_id: z.number().int().positive().max(2147483647),
     closing_prayer: z.string().trim().min(1).max(255),
-}) satisfies z.ZodType<Omit<SacramentMeeting, "id">>;
+});
 
 /***** Form helpers *****/
 function getFormString(formData: FormData, name: string): string {
@@ -238,16 +232,15 @@ export function readMeetingForm(formData: FormData) {
         presiding: getFormString(formData, "presiding"),
         conducting: getFormString(formData, "conducting"),
         announcements: getFormString(formData, "announcements"),
-        opening_hymn_number: getFormString(formData, "opening_hymn_number"),
-        opening_hymn_title: getFormString(formData, "opening_hymn_title"),
+        opening_hymn_id: getFormString(formData, "opening_hymn_id"),
         opening_prayer: getFormString(formData, "opening_prayer"),
         ward_business: getFormString(formData, "ward_business"),
         stake_business: formData.get("stake_business") === "on",
-        sacrament_hymn_number: getFormString(formData, "sacrament_hymn_number"),
-        sacrament_hymn_title: getFormString(formData, "sacrament_hymn_title"),
+        sacrament_hymn_id: getFormString(formData, "sacrament_hymn_id"),
+        intermediate_hymn_id: getFormString(formData, "intermediate_hymn_id"),
+        musical_number_ids: getFormString(formData, "musical_number_ids"),
         speakers: getFormString(formData, "speakers"),
-        closing_hymn_number: getFormString(formData, "closing_hymn_number"),
-        closing_hymn_title: getFormString(formData, "closing_hymn_title"),
+        closing_hymn_id: getFormString(formData, "closing_hymn_id"),
         closing_prayer: getFormString(formData, "closing_prayer"),
     };
     return MeetingFormSchema.safeParse(raw);

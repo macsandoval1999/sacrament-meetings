@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import MeetingForm from "@/components/meetings/MeetingForm";
-import { updateMeeting } from "@/lib/meetings/actions";
+import { updateMeeting } from "@/lib/meetings/meetings-actions";
 import { getMeetingById } from "@/lib/meetings/models/meetings-models";
 import { notFound } from "next/navigation";
+import { getAllHymns } from "@/lib/hymns/models/hymns-models";
 
 interface EditMeetingPageProps {
     params: Promise<{ id: string }>;
@@ -29,7 +30,8 @@ async function EditMeetingForm({ params }: EditMeetingPageProps) {
     }
 
     const action = updateMeeting.bind(null, id);
-    return <MeetingForm action={action} meeting={meeting} />;
+    const hymns = await getAllHymns();
+    return <MeetingForm action={action} meeting={meeting} hymns={hymns} />;
 }
 
 export default function EditMeetingPage({ params }: EditMeetingPageProps) {

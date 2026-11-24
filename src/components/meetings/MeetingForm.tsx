@@ -6,13 +6,14 @@
 
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import type {
     MeetingFormInput,
     MeetingFormState,
     SacramentMeeting,
 } from "@/lib/meetings/meetings-types";
+import type { Hymn } from "@/lib/hymns/hymns-types";
 
 interface MeetingFormProps {
     action: (
@@ -20,6 +21,7 @@ interface MeetingFormProps {
         formData: FormData
     ) => Promise<MeetingFormState>;
     meeting?: SacramentMeeting;
+    hymns: Hymn[];
 }
 
 const initialState: MeetingFormState = { message: "", errors: {} };
@@ -36,40 +38,48 @@ function getInitialValues(meeting?: SacramentMeeting): MeetingFormInput {
             presiding: "",
             conducting: "",
             announcements: "",
-            opening_hymn_number: "",
-            opening_hymn_title: "",
+            opening_hymn_id: "",
             opening_prayer: "",
             ward_business: "",
             stake_business: false,
-            sacrament_hymn_number: "",
-            sacrament_hymn_title: "",
+            sacrament_hymn_id: "",
+            intermediate_hymn_id: "",
+            musical_number_ids: "",
             speakers: "",
-            closing_hymn_number: "",
-            closing_hymn_title: "",
+            closing_hymn_id: "",
             closing_prayer: "",
         };
     }
 
+    let intermediateHymnId = "";
+    if (meeting.intermediate_hymn) {
+        intermediateHymnId = String(meeting.intermediate_hymn.id);
+    }
+    const speakerLines: string[] = [];
+    for (const item of meeting.speakers) {
+        if (item.topic) {
+            speakerLines.push(`${item.name} | ${item.topic}`);
+        } else {
+            speakerLines.push(item.name);
+        }
+    }
     return {
         date: meeting.date,
         meeting_type: meeting.meeting_type,
         presiding: meeting.presiding,
         conducting: meeting.conducting,
         announcements: (meeting.announcements ?? []).join("\n"),
-        opening_hymn_number: String(meeting.opening_hymn.number),
-        opening_hymn_title: meeting.opening_hymn.title,
+        opening_hymn_id: String(meeting.opening_hymn.id),
         opening_prayer: meeting.opening_prayer,
         ward_business: meeting.ward_business
             .map((item) => item.description)
             .join("\n"),
         stake_business: meeting.stake_business,
-        sacrament_hymn_number: String(meeting.sacrament_hymn.number),
-        sacrament_hymn_title: meeting.sacrament_hymn.title,
-        speakers: meeting.speakers
-            .map((item) => `${item.name} | ${item.topic} | ${item.type}`)
-            .join("\n"),
-        closing_hymn_number: String(meeting.closing_hymn.number),
-        closing_hymn_title: meeting.closing_hymn.title,
+        sacrament_hymn_id: String(meeting.sacrament_hymn.id),
+        intermediate_hymn_id: intermediateHymnId,
+        musical_number_ids: (meeting.musical_numbers ?? []).map((hymn) => String(hymn.id)).join("\n"),
+        speakers: speakerLines.join("\n"),
+        closing_hymn_id: String(meeting.closing_hymn.id),
         closing_prayer: meeting.closing_prayer,
     };
 }
@@ -98,16 +108,9 @@ function FieldError({
     );
 }
 
-export default function MeetingForm({ action, meeting }: MeetingFormProps) {
+export default function MeetingForm({ action, meeting, hymns }: MeetingFormProps) {
     const [state, formAction, pending] = useActionState(action, initialState);
-    const [values, setValues] = useState(() => getInitialValues(meeting));
-
-    function updateField(
-        name: keyof MeetingFormInput,
-        value: string | boolean
-    ) {
-        setValues((current) => ({ ...current, [name]: value }));
-    }
+    const values = getInitialValues(meeting);
 
     function getFieldErrorProps(
         field: keyof MeetingFormInput,
@@ -159,10 +162,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="date"
                     type="date"
                     required
-                    value={values.date}
-                    onChange={(event) =>
-                        updateField("date", event.target.value)
-                    }
+                    defaultValue={values.date}
                     className={fieldClassName}
                     {...getFieldErrorProps("date")}
                 />
@@ -177,10 +177,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     id="meeting_type"
                     name="meeting_type"
                     required
-                    value={values.meeting_type}
-                    onChange={(event) =>
-                        updateField("meeting_type", event.target.value)
-                    }
+                    defaultValue={values.meeting_type}
                     className={fieldClassName}
                     {...getFieldErrorProps("meeting_type")}
                 >
@@ -201,10 +198,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="presiding"
                     required
                     maxLength={255}
-                    value={values.presiding}
-                    onChange={(event) =>
-                        updateField("presiding", event.target.value)
-                    }
+                    defaultValue={values.presiding}
                     className={fieldClassName}
                     {...getFieldErrorProps("presiding")}
                 />
@@ -220,10 +214,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="conducting"
                     required
                     maxLength={255}
-                    value={values.conducting}
-                    onChange={(event) =>
-                        updateField("conducting", event.target.value)
-                    }
+                    defaultValue={values.conducting}
                     className={fieldClassName}
                     {...getFieldErrorProps("conducting")}
                 />
@@ -239,10 +230,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="announcements"
                     rows={4}
                     maxLength={4000}
-                    value={values.announcements}
-                    onChange={(event) =>
-                        updateField("announcements", event.target.value)
-                    }
+                    defaultValue={values.announcements}
                     className={fieldClassName}
                     {...getFieldErrorProps("announcements")}
                 />
@@ -255,60 +243,25 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
             <fieldset className="grid gap-5 rounded-lg border border-border p-4 sm:grid-cols-2">
                 <legend className="px-2 font-semibold">Opening hymn</legend>
                 <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="opening_hymn_number"
-                    >
-                        Hymn number
+                    <label className={labelClassName} htmlFor="opening_hymn_id">
+                        Hymn
                     </label>
-                    <input
-                        id="opening_hymn_number"
-                        name="opening_hymn_number"
-                        type="number"
-                        min={1}
-                        step={1}
+                    <select
+                        id="opening_hymn_id"
+                        name="opening_hymn_id"
                         required
-                        value={values.opening_hymn_number}
-                        onChange={(event) =>
-                            updateField(
-                                "opening_hymn_number",
-                                event.target.value
-                            )
-                        }
+                        defaultValue={values.opening_hymn_id}
                         className={fieldClassName}
-                        {...getFieldErrorProps("opening_hymn_number")}
-                    />
-                    <FieldError
-                        field="opening_hymn_number"
-                        errors={state.errors}
-                    />
-                </div>
-                <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="opening_hymn_title"
+                        {...getFieldErrorProps("opening_hymn_id")}
                     >
-                        Hymn title
-                    </label>
-                    <input
-                        id="opening_hymn_title"
-                        name="opening_hymn_title"
-                        required
-                        maxLength={255}
-                        value={values.opening_hymn_title}
-                        onChange={(event) =>
-                            updateField(
-                                "opening_hymn_title",
-                                event.target.value
-                            )
-                        }
-                        className={fieldClassName}
-                        {...getFieldErrorProps("opening_hymn_title")}
-                    />
-                    <FieldError
-                        field="opening_hymn_title"
-                        errors={state.errors}
-                    />
+                        <option value="">Select a hymn</option>
+                        {hymns.map((hymn) => (
+                            <option key={hymn.id} value={String(hymn.id)}>
+                                {hymn.id} - {hymn.title}
+                            </option>
+                        ))}
+                    </select>
+                    <FieldError field="opening_hymn_id" errors={state.errors} />
                 </div>
             </fieldset>
 
@@ -321,10 +274,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="opening_prayer"
                     required
                     maxLength={255}
-                    value={values.opening_prayer}
-                    onChange={(event) =>
-                        updateField("opening_prayer", event.target.value)
-                    }
+                    defaultValue={values.opening_prayer}
                     className={fieldClassName}
                     {...getFieldErrorProps("opening_prayer")}
                 />
@@ -340,10 +290,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="ward_business"
                     rows={4}
                     maxLength={4000}
-                    value={values.ward_business}
-                    onChange={(event) =>
-                        updateField("ward_business", event.target.value)
-                    }
+                    defaultValue={values.ward_business}
                     className={fieldClassName}
                     {...getFieldErrorProps("ward_business")}
                 />
@@ -362,10 +309,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                         id="stake_business"
                         name="stake_business"
                         type="checkbox"
-                        checked={values.stake_business}
-                        onChange={(event) =>
-                            updateField("stake_business", event.target.checked)
-                        }
+                        defaultChecked={values.stake_business}
                         className="h-5 w-5 accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                         {...getFieldErrorProps("stake_business")}
                     />
@@ -377,80 +321,85 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
             <fieldset className="grid gap-5 rounded-lg border border-border p-4 sm:grid-cols-2">
                 <legend className="px-2 font-semibold">Sacrament hymn</legend>
                 <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="sacrament_hymn_number"
-                    >
-                        Hymn number
+                    <label className={labelClassName} htmlFor="sacrament_hymn_id">
+                        Hymn
                     </label>
-                    <input
-                        id="sacrament_hymn_number"
-                        name="sacrament_hymn_number"
-                        type="number"
-                        min={1}
-                        step={1}
+                    <select
+                        id="sacrament_hymn_id"
+                        name="sacrament_hymn_id"
                         required
-                        value={values.sacrament_hymn_number}
-                        onChange={(event) =>
-                            updateField(
-                                "sacrament_hymn_number",
-                                event.target.value
-                            )
-                        }
+                        defaultValue={values.sacrament_hymn_id}
                         className={fieldClassName}
-                        {...getFieldErrorProps("sacrament_hymn_number")}
-                    />
-                    <FieldError
-                        field="sacrament_hymn_number"
-                        errors={state.errors}
-                    />
-                </div>
-                <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="sacrament_hymn_title"
+                        {...getFieldErrorProps("sacrament_hymn_id")}
                     >
-                        Hymn title
-                    </label>
-                    <input
-                        id="sacrament_hymn_title"
-                        name="sacrament_hymn_title"
-                        required
-                        maxLength={255}
-                        value={values.sacrament_hymn_title}
-                        onChange={(event) =>
-                            updateField(
-                                "sacrament_hymn_title",
-                                event.target.value
-                            )
-                        }
-                        className={fieldClassName}
-                        {...getFieldErrorProps("sacrament_hymn_title")}
-                    />
-                    <FieldError
-                        field="sacrament_hymn_title"
-                        errors={state.errors}
-                    />
+                        <option value="">Select a hymn</option>
+                        {hymns.map((hymn) => (
+                            <option key={hymn.id} value={String(hymn.id)}>
+                                {hymn.id} - {hymn.title}
+                            </option>
+                        ))}
+                    </select>
+                    <FieldError field="sacrament_hymn_id" errors={state.errors} />
                 </div>
             </fieldset>
 
             <div>
+                <label className={labelClassName} htmlFor="intermediate_hymn_id">
+                    Intermediate hymn (optional)
+                </label>
+                <select
+                    id="intermediate_hymn_id"
+                    name="intermediate_hymn_id"
+                    defaultValue={values.intermediate_hymn_id}
+                    className={fieldClassName}
+                    {...getFieldErrorProps("intermediate_hymn_id")}
+                >
+                    <option value="">No intermediate hymn</option>
+                    {hymns.map((hymn) => (
+                        <option key={hymn.id} value={String(hymn.id)}>
+                            {hymn.id} - {hymn.title}
+                        </option>
+                    ))}
+                </select>
+                <FieldError field="intermediate_hymn_id" errors={state.errors} />
+            </div>
+
+            <div>
+                <label className={labelClassName} htmlFor="musical_number_ids">
+                    Musical hymns (optional)
+                </label>
+                <p id="musical-numbers-help" className="mt-1 text-sm text-muted">
+                    Enter one hymn number per line.
+                </p>
+                <textarea
+                    id="musical_number_ids"
+                    name="musical_number_ids"
+                    rows={4}
+                    maxLength={4000}
+                    placeholder={"152\n301"}
+                    defaultValue={values.musical_number_ids}
+                    className={fieldClassName}
+                    {...getFieldErrorProps("musical_number_ids", "musical-numbers-help")}
+                />
+                <FieldError field="musical_number_ids" errors={state.errors} />
+            </div>
+
+            <div>
                 <label className={labelClassName} htmlFor="speakers">
-                    Speakers and musical numbers
+                    Speakers
                 </label>
                 <p id="speakers-help" className="mt-1 text-sm text-muted">
-                    Enter one per line as Name | Topic | speaker or Name | Topic
-                    | musical-number. The topic may be blank.
+                    Enter one speaker per line as Name | Topic. The topic is optional.
                 </p>
                 <textarea
                     id="speakers"
                     name="speakers"
                     rows={5}
                     maxLength={6000}
-                    value={values.speakers}
-                    onChange={(event) =>
-                        updateField("speakers", event.target.value)
+                    placeholder={
+                        "Brother Smith | Reverence\nSister Jones | Faith"
                     }
+                    defaultValue={values.speakers}
                     className={fieldClassName}
                     {...getFieldErrorProps("speakers", "speakers-help")}
                 />
@@ -460,60 +409,25 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
             <fieldset className="grid gap-5 rounded-lg border border-border p-4 sm:grid-cols-2">
                 <legend className="px-2 font-semibold">Closing hymn</legend>
                 <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="closing_hymn_number"
-                    >
-                        Hymn number
+                    <label className={labelClassName} htmlFor="closing_hymn_id">
+                        Hymn
                     </label>
-                    <input
-                        id="closing_hymn_number"
-                        name="closing_hymn_number"
-                        type="number"
-                        min={1}
-                        step={1}
+                    <select
+                        id="closing_hymn_id"
+                        name="closing_hymn_id"
                         required
-                        value={values.closing_hymn_number}
-                        onChange={(event) =>
-                            updateField(
-                                "closing_hymn_number",
-                                event.target.value
-                            )
-                        }
+                        defaultValue={values.closing_hymn_id}
                         className={fieldClassName}
-                        {...getFieldErrorProps("closing_hymn_number")}
-                    />
-                    <FieldError
-                        field="closing_hymn_number"
-                        errors={state.errors}
-                    />
-                </div>
-                <div>
-                    <label
-                        className={labelClassName}
-                        htmlFor="closing_hymn_title"
+                        {...getFieldErrorProps("closing_hymn_id")}
                     >
-                        Hymn title
-                    </label>
-                    <input
-                        id="closing_hymn_title"
-                        name="closing_hymn_title"
-                        required
-                        maxLength={255}
-                        value={values.closing_hymn_title}
-                        onChange={(event) =>
-                            updateField(
-                                "closing_hymn_title",
-                                event.target.value
-                            )
-                        }
-                        className={fieldClassName}
-                        {...getFieldErrorProps("closing_hymn_title")}
-                    />
-                    <FieldError
-                        field="closing_hymn_title"
-                        errors={state.errors}
-                    />
+                        <option value="">Select a hymn</option>
+                        {hymns.map((hymn) => (
+                            <option key={hymn.id} value={String(hymn.id)}>
+                                {hymn.id} - {hymn.title}
+                            </option>
+                        ))}
+                    </select>
+                    <FieldError field="closing_hymn_id" errors={state.errors} />
                 </div>
             </fieldset>
 
@@ -526,10 +440,7 @@ export default function MeetingForm({ action, meeting }: MeetingFormProps) {
                     name="closing_prayer"
                     required
                     maxLength={255}
-                    value={values.closing_prayer}
-                    onChange={(event) =>
-                        updateField("closing_prayer", event.target.value)
-                    }
+                    defaultValue={values.closing_prayer}
                     className={fieldClassName}
                     {...getFieldErrorProps("closing_prayer")}
                 />

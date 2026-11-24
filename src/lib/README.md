@@ -8,8 +8,9 @@ The `lib` folder contains reusable data, API, and validation modules.
   API response envelope and its error, paginated-list, and by-date data. The
   meeting list and current-meeting view use these response types. They provide
   compile-time checking only; they do not validate JSON at runtime.
-- **`helpers.ts`** contains shared ward-name and date-formatting helpers.
-- **`meetings/actions.ts`** defines the create, update, and delete Server
+- **`helpers.ts`** contains shared date, response, request, and meeting-formatting helpers.
+- **`validate.ts`** contains shared number and database-error validation helpers.
+- **`meetings/meetings-actions.ts`** defines the create, update, and delete Server
   Actions used by the meeting forms and delete controls.
 - **`meetings/controllers`** validates HTTP requests, calls the models, and
   returns API responses.
@@ -22,6 +23,7 @@ The `lib` folder contains reusable data, API, and validation modules.
 - **`meetings/meetings-types.ts`** defines meeting, form-input, and form-state
   types.
 - **`meetings/meetings-validation.ts`** validates meeting dates and IDs.
+- **`hymns`** contains the hymn models, controllers, schemas, types, and validation.
 
 The JSON API and the meeting Server Actions are backed by the same meeting
 models.

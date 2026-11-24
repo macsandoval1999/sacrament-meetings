@@ -11,19 +11,46 @@ const options = {
             schemas: {
                 Hymn: {
                     type: "object",
-                    required: ["number", "title"],
+                    required: ["id", "title"],
                     properties: {
-                        number: { type: "integer" },
+                        id: { type: "integer" },
                         title: { type: "string" },
+                    },
+                },
+                HymnInput: {
+                    type: "object",
+                    required: ["id", "title"],
+                    properties: {
+                        id: { type: "integer", minimum: 1, maximum: 2147483647, description: "Hymn number; cannot be changed after creation." },
+                        title: { type: "string", minLength: 1, maxLength: 255 },
+                    },
+                },
+                HymnResponse: {
+                    type: "object",
+                    required: ["statusCode", "message", "data", "errors"],
+                    properties: {
+                        statusCode: { type: "integer" },
+                        message: { type: "string" },
+                        data: { $ref: "#/components/schemas/Hymn" },
+                        errors: { type: "array", nullable: true, items: { $ref: "#/components/schemas/ApiResponseError" } },
+                    },
+                },
+                HymnListResponse: {
+                    type: "object",
+                    required: ["statusCode", "message", "data", "errors"],
+                    properties: {
+                        statusCode: { type: "integer" },
+                        message: { type: "string" },
+                        data: { type: "array", items: { $ref: "#/components/schemas/Hymn" } },
+                        errors: { type: "array", nullable: true, items: { $ref: "#/components/schemas/ApiResponseError" } },
                     },
                 },
                 SpeakerItem: {
                     type: "object",
-                    required: ["name", "topic", "type"],
+                    required: ["name", "topic"],
                     properties: {
                         name: { type: "string" },
                         topic: { type: "string" },
-                        type: { type: "string", enum: ["speaker", "musical-number"] },
                     },
                 },
                 WardBusinessItem: {
@@ -59,6 +86,14 @@ const options = {
                         },
                         stake_business: { type: "boolean" },
                         sacrament_hymn: { $ref: "#/components/schemas/Hymn" },
+                        intermediate_hymn: {
+                            allOf: [{ $ref: "#/components/schemas/Hymn" }],
+                            nullable: true,
+                        },
+                        musical_numbers: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Hymn" },
+                        },
                         speakers: {
                             type: "array",
                             items: { $ref: "#/components/schemas/SpeakerItem" },
@@ -71,9 +106,9 @@ const options = {
                     type: "object",
                     required: [
                         "date", "meeting_type", "presiding", "conducting",
-                        "opening_hymn", "opening_prayer", "ward_business",
-                        "stake_business", "sacrament_hymn", "speakers",
-                        "closing_hymn", "closing_prayer",
+                        "opening_hymn_id", "opening_prayer", "ward_business",
+                        "stake_business", "sacrament_hymn_id", "speakers",
+                        "closing_hymn_id", "closing_prayer",
                     ],
                     properties: {
                         date: { type: "string", format: "date" },
@@ -87,19 +122,26 @@ const options = {
                             type: "array",
                             items: { type: "string" },
                         },
-                        opening_hymn: { $ref: "#/components/schemas/Hymn" },
+                        opening_hymn_id: { type: "integer", minimum: 1, description: "Hymn database ID." },
                         opening_prayer: { type: "string", minLength: 1, maxLength: 255 },
                         ward_business: {
                             type: "array",
                             items: { $ref: "#/components/schemas/WardBusinessItem" },
                         },
                         stake_business: { type: "boolean" },
-                        sacrament_hymn: { $ref: "#/components/schemas/Hymn" },
+                        sacrament_hymn_id: { type: "integer", minimum: 1, description: "Hymn database ID." },
+                        intermediate_hymn_id: { type: "integer", minimum: 1, nullable: true, description: "Optional hymn database ID." },
+                        musical_number_ids: {
+                            type: "array",
+                            description: "Hymn database IDs.",
+                            maxItems: 30,
+                            items: { type: "integer", minimum: 1 },
+                        },
                         speakers: {
                             type: "array",
                             items: { $ref: "#/components/schemas/SpeakerItem" },
                         },
-                        closing_hymn: { $ref: "#/components/schemas/Hymn" },
+                        closing_hymn_id: { type: "integer", minimum: 1, description: "Hymn database ID." },
                         closing_prayer: { type: "string", minLength: 1, maxLength: 255 },
                     },
                 },

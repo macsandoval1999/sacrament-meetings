@@ -22,28 +22,12 @@ import {
  *     responses:
  *       '200':
  *         description: The requested meeting.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/MeetingResponse'
  *       '400':
  *         description: Invalid meeting ID.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '404':
  *         description: No meeting exists for the requested ID.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '500':
  *         description: The meeting data could not be retrieved.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *   put:
  *     tags:
  *       - Meetings
@@ -64,34 +48,16 @@ import {
  *     responses:
  *       '200':
  *         description: Meeting updated.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/MeetingResponse'
  *       '400':
  *         description: Invalid meeting ID, JSON, or meeting data.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '404':
  *         description: No meeting exists for the requested ID.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '415':
  *         description: The request must use application/json.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       '409':
+ *         description: A meeting already exists for the requested date.
  *       '500':
  *         description: The meeting could not be updated.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *   delete:
  *     tags:
  *       - Meetings
@@ -106,28 +72,12 @@ import {
  *     responses:
  *       '200':
  *         description: Meeting deleted; the response data contains the deleted meeting.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/MeetingResponse'
  *       '400':
  *         description: Invalid meeting ID.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '404':
  *         description: No meeting exists for the requested ID.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  *       '500':
  *         description: The meeting could not be deleted.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiErrorResponse'
  */
 export const GET = getMeeting;
 export const PUT = updateMeeting;

@@ -1,11 +1,12 @@
 import { formatMeetingDate } from "../../lib/helpers";
 import type { ReactNode } from "react";
-import type { Hymn, SacramentMeeting } from "../../lib/meetings/meetings-types";
+import type { Hymn } from "../../lib/hymns/hymns-types";
+import type { SacramentMeeting } from "../../lib/meetings/meetings-types";
 
 function HymnEntry({ hymn }: { hymn: Hymn }) {
     return (
         <>
-            {hymn.title} <span className="text-muted">(#{hymn.number})</span>
+            {hymn.title} <span className="text-muted">(#{hymn.id})</span>
         </>
     );
 }
@@ -49,18 +50,12 @@ export default function MeetingDetails({
         speakersContent = (
             <ul className="space-y-3">
                 {meeting.speakers.map((item, index) => {
-                    let itemTypeLabel = "Speaker";
-                    if (item.type === "musical-number") {
-                        itemTypeLabel = "Musical number";
-                    }
-
                     return (
                         <li key={index}>
-                            <span className="font-medium">{item.name}</span>
-                            <span className="text-muted">
-                                {" "}
-                                &middot; {itemTypeLabel}
+                            <span className="font-medium">
+                                &middot; {item.name}
                             </span>
+                            <span className="text-muted"></span>
                             {item.topic && (
                                 <p className="text-sm text-muted">
                                     {item.topic}
@@ -69,6 +64,19 @@ export default function MeetingDetails({
                         </li>
                     );
                 })}
+            </ul>
+        );
+    }
+
+    let musicalNumbersContent: ReactNode = "None";
+    if (meeting.musical_numbers && meeting.musical_numbers.length > 0) {
+        musicalNumbersContent = (
+            <ul className="mt-3 space-y-2">
+                {meeting.musical_numbers.map((item, index) => (
+                    <li key={index}>
+                        {item.id} - {item.title}
+                    </li>
+                ))}
             </ul>
         );
     }
@@ -152,9 +160,29 @@ export default function MeetingDetails({
                             <HymnEntry hymn={meeting.sacrament_hymn} />
                         </dd>
                     </div>
+                    {meeting.intermediate_hymn && (
+                        <div className="py-4">
+                            <dt className="text-sm font-semibold text-muted">
+                                Intermediate hymn
+                            </dt>
+                            <dd className="mt-1">
+                                <HymnEntry hymn={meeting.intermediate_hymn} />
+                            </dd>
+                        </div>
+                    )}
+                    {meeting.musical_numbers && meeting.musical_numbers.length > 0 && (
+                        <div className="py-4">
+                            <dt className="text-sm font-semibold text-muted">
+                                Musical numbers
+                            </dt>
+                            <dd className="mt-1">
+                                {musicalNumbersContent}
+                            </dd>
+                        </div>
+                    )}
                     <div className="py-4">
                         <dt className="text-sm font-semibold text-muted">
-                            Speakers and musical numbers
+                            Speakers
                         </dt>
                         <dd className="mt-1">
                             {speakersContent}

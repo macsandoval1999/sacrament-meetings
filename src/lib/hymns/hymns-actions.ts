@@ -1,0 +1,1 @@
+// This file is empty because there are currently no front end actions for hymns. Currently the only way to manage hymns is through the database models or api-docs

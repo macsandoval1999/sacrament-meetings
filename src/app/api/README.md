@@ -50,6 +50,17 @@ The item endpoints return **400** for an invalid ID and **404** when a valid ID
 does not exist. Update and delete return **500** if the database operation
 fails. The `[id]` route awaits Next.js `params` before validating the ID.
 
+## Hymns
+
+- `GET /api/hymns` lists hymns. Use `id`, `title`, or `query` to search.
+- `GET /api/hymns/1` retrieves hymn `1`.
+- `POST /api/hymns` creates a hymn with `{ "id": 1, "title": "..." }`.
+- `PUT /api/hymns/1` updates its title; the body ID must match the URL.
+- `DELETE /api/hymns/1` deletes it unless a meeting uses it.
+
+The hymn ID is its hymn number. Meeting inputs use hymn IDs; meeting responses
+include each hymn's ID and title.
+
 ## Meeting pages
 
 The user-facing routes are `/meetings`, `/meetings/new`,

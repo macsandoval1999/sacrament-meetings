@@ -3,11 +3,8 @@
     return JSON responses. Route Handlers delegate to the matching controller.
 */
 
-import type {
-    ApiFieldError,
-    ApiResponse,
-    ApiResponseError,
-} from "@/lib/api/api-responses";
+import { getApiResponse, getErrorResponse, readJsonBody } from "@/lib/helpers";
+import { isDuplicateError } from "@/lib/validate";
 import {
     createMeeting as createMeetingInDatabase,
     deleteMeeting as deleteMeetingFromDatabase,
@@ -22,66 +19,15 @@ import { MeetingPayloadSchema } from "@/lib/meetings/meetings-schemas";
 import {
     isValidISODate,
     parseMeetingId,
+    validateMeetingHymns,
 } from "@/lib/meetings/meetings-validation";
 
-function getApiResponse<TData>(
-    statusCode: number,
-    message: string,
-    data: TData | null,
-    errors: ApiResponseError[] | null = null
-) {
-    const body: ApiResponse<TData> = {
-        statusCode,
-        message,
-        data,
-        errors,
-    };
-
-    return Response.json(body, { status: statusCode });
-}
-
-function getErrorResponse(
-    code: string,
-    message: string,
-    statusCode: number,
-    fieldErrors: ApiFieldError[] = []
-) {
-    const error: ApiResponseError = { code, message };
-    if (fieldErrors.length > 0) {
-        error.fieldErrors = fieldErrors;
+async function doesDateExist(date: string): Promise<boolean> {
+    const meeting = await getMeetingByDate(date);
+    if (!meeting) {
+        return false;
     }
-
-    return getApiResponse(statusCode, message, null, [error]);
-}
-
-async function readJsonBody(
-    request: Request
-): Promise<{ data: unknown } | { response: Response }> {
-    const contentType = request.headers
-        .get("content-type")
-        ?.split(";")[0]
-        .trim()
-        .toLowerCase();
-    if (contentType !== "application/json") {
-        return {
-            response: getErrorResponse(
-                "UNSUPPORTED_MEDIA_TYPE",
-                "Expected application/json.",
-                415
-            ),
-        };
-    }
-
-    try {
-        return { data: await request.json() };
-    } catch (error) {
-        if (!(error instanceof SyntaxError)) {
-            throw error;
-        }
-        return {
-            response: getErrorResponse("INVALID_JSON", "Invalid JSON.", 400),
-        };
-    }
+    return true;
 }
 
 export async function getMeetings(request: Request) {
@@ -270,6 +216,28 @@ export async function createMeeting(request: Request) {
                 }))
             );
         }
+        const hymnErrors = await validateMeetingHymns(parsed.data);
+        if (Object.keys(hymnErrors).length > 0) {
+            return getErrorResponse(
+                "INVALID_MEETING",
+                "The meeting data is invalid.",
+                400,
+                Object.entries(hymnErrors).flatMap(([field, messages]) =>
+                    messages.map((message) => ({ field, message }))
+                )
+            );
+        }
+        if (await doesDateExist(parsed.data.date)) {
+            return getErrorResponse(
+                "MEETING_DATE_EXISTS",
+                "A meeting already exists for this date.",
+                409,
+                [{
+                    field: "date",
+                    message: "Choose a date that does not already have an agenda.",
+                }]
+            );
+        }
 
         const meeting = await createMeetingInDatabase(parsed.data);
         return getApiResponse(
@@ -278,6 +246,14 @@ export async function createMeeting(request: Request) {
             meeting
         );
     } catch (error) {
+        if (isDuplicateError(error, "meetings_date_key")) {
+            return getErrorResponse(
+                "MEETING_DATE_EXISTS",
+                "A meeting already exists for this date.",
+                409,
+                [{ field: "date", message: "Choose a date that does not already have an agenda." }]
+            );
+        }
         console.error("Failed to create meeting:", error);
         return getErrorResponse(
             "INTERNAL_SERVER_ERROR",
@@ -318,6 +294,37 @@ export async function updateMeeting(
                 }))
             );
         }
+        const hymnErrors = await validateMeetingHymns(parsed.data);
+        if (Object.keys(hymnErrors).length > 0) {
+            return getErrorResponse(
+                "INVALID_MEETING",
+                "The meeting data is invalid.",
+                400,
+                Object.entries(hymnErrors).flatMap(([field, messages]) =>
+                    messages.map((message) => ({ field, message }))
+                )
+            );
+        }
+        const existingMeeting = await getMeetingByDate(parsed.data.date);
+        if (existingMeeting && existingMeeting.id !== id) {
+            const meeting = await getMeetingById(id);
+            if (!meeting) {
+                return getErrorResponse(
+                    "MEETING_NOT_FOUND",
+                    "No meeting was found with that ID.",
+                    404
+                );
+            }
+            return getErrorResponse(
+                "MEETING_DATE_EXISTS",
+                "A meeting already exists for this date.",
+                409,
+                [{
+                    field: "date",
+                    message: "Choose a date that does not already have an agenda.",
+                }]
+            );
+        }
 
         const meeting = await updateMeetingInDatabase(id, parsed.data);
         if (!meeting) {
@@ -333,6 +340,14 @@ export async function updateMeeting(
             meeting
         );
     } catch (error) {
+        if (isDuplicateError(error, "meetings_date_key")) {
+            return getErrorResponse(
+                "MEETING_DATE_EXISTS",
+                "A meeting already exists for this date.",
+                409,
+                [{ field: "date", message: "Choose a date that does not already have an agenda." }]
+            );
+        }
         console.error("Failed to update meeting:", error);
         return getErrorResponse(
             "INTERNAL_SERVER_ERROR",

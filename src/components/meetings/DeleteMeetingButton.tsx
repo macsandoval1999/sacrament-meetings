@@ -6,7 +6,7 @@
 "use client";
 
 import { useRef } from "react";
-import { deleteMeeting } from "@/lib/meetings/actions";
+import { deleteMeeting } from "@/lib/meetings/meetings-actions";
 import { formatMeetingDate } from "@/lib/helpers";
 
 export default function DeleteMeetingButton({

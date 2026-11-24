@@ -23,11 +23,14 @@ export async function fetchMeetingsApi(
     // Mark this function as I/O-bound so the fetch runs on every call.
     await io();
     // Resolve the API origin from the environment, falling back to localhost in development. This is used as the base URL for the fetch request.
-    const origin =
-        process.env.MEETINGS_API_ORIGIN ??
-        (process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : `http://localhost:${process.env.PORT || "3000"}`);
+    let origin = process.env.MEETINGS_API_ORIGIN;
+    if (!origin) {
+        if (process.env.VERCEL_URL) {
+            origin = `https://${process.env.VERCEL_URL}`;
+        } else {
+            origin = `http://localhost:${process.env.PORT || "3000"}`;
+        }
+    }
 
     // Resolve the path against the origin and fetch the API response.
     return fetch(new URL(path, origin), {

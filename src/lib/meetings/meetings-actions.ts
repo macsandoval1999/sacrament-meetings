@@ -18,7 +18,8 @@ import {
     formatMeetingFormErrors,
     readMeetingForm,
 } from "@/lib/meetings/meetings-schemas";
-import { parseMeetingId } from "@/lib/meetings/meetings-validation";
+import { parseMeetingId, validateMeetingHymns } from "@/lib/meetings/meetings-validation";
+import { isDuplicateError } from "@/lib/validate";
 import type {
     MeetingFormState,
     SacramentMeeting,
@@ -38,8 +39,20 @@ export async function createMeeting(
     }
 
     try {
+        const errors = await validateMeetingHymns(parsed.data);
+        if (Object.keys(errors).length > 0) {
+            return { message: "Please correct the highlighted fields.", errors };
+        }
         await createMeetingInDatabase(parsed.data);
     } catch (error) {
+        if (isDuplicateError(error, "meetings_date_key")) {
+            return {
+                message: "A meeting already exists for this date.",
+                errors: {
+                    date: ["Choose a date that does not already have an agenda."],
+                },
+            };
+        }
         console.error("Failed to create meeting:", error);
         throw new Error("Unable to create the meeting. Please try again.");
     }
@@ -65,8 +78,20 @@ export async function updateMeeting(
 
     let updated: SacramentMeeting | null;
     try {
+        const errors = await validateMeetingHymns(parsed.data);
+        if (Object.keys(errors).length > 0) {
+            return { message: "Please correct the highlighted fields.", errors };
+        }
         updated = await updateMeetingInDatabase(meetingId, parsed.data);
     } catch (error) {
+        if (isDuplicateError(error, "meetings_date_key")) {
+            return {
+                message: "A meeting already exists for this date.",
+                errors: {
+                    date: ["Choose a date that does not already have an agenda."],
+                },
+            };
+        }
         console.error("Failed to update meeting:", error);
         throw new Error("Unable to update the meeting. Please try again.");
     }
